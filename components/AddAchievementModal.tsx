@@ -12,6 +12,7 @@ import {
   Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts, PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -40,6 +41,10 @@ interface AddAchievementModalProps {
 }
 
 export default function AddAchievementModal({ visible, onClose, onAdd }: AddAchievementModalProps) {
+  const [fontsLoaded] = useFonts({
+    PatrickHand_400Regular,
+  });
+
   const [title, setTitle] = useState('');
   const [smallImage, setSmallImage] = useState('');
   const [fullImage, setFullImage] = useState('');
@@ -119,7 +124,6 @@ export default function AddAchievementModal({ visible, onClose, onAdd }: AddAchi
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       onAdd({
@@ -137,6 +141,8 @@ export default function AddAchievementModal({ visible, onClose, onAdd }: AddAchi
     }
   };
 
+  if (!fontsLoaded) return null;
+
   return (
     <Modal
       visible={visible}
@@ -148,37 +154,51 @@ export default function AddAchievementModal({ visible, onClose, onAdd }: AddAchi
         <Animated.View style={[styles.backdrop, backdropStyle]} />
         
         <Animated.View style={[styles.modalContent, animatedStyle]}>
-          <LinearGradient
-            colors={['#1a0a2e', '#16213e', '#0f0518']}
-            style={styles.modalGradient}
-          >
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.modalTitle}>Add New Achievement</Text>
-              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-                <X size={24} color="#FFFFFF" />
-              </TouchableOpacity>
+          <View style={styles.stickyNoteModal}>
+            {/* Pin */}
+            <View style={styles.pin} />
+            
+            {/* Ruled lines */}
+            <View style={styles.ruledLines}>
+              {[...Array(15)].map((_, i) => (
+                <View key={i} style={styles.ruledLine} />
+              ))}
             </View>
+            
+            {/* Close button */}
+            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+              <X size={24} color="#2D3748" />
+            </TouchableOpacity>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+              <Text style={[styles.modalTitle, { fontFamily: 'PatrickHand_400Regular' }]}>
+                Add New Achievement
+              </Text>
+
               {/* Title Input */}
               <View style={styles.inputSection}>
-                <Text style={styles.label}>Achievement Title</Text>
+                <Text style={[styles.label, { fontFamily: 'PatrickHand_400Regular' }]}>
+                  Achievement Title
+                </Text>
                 <TextInput
-                  style={styles.textInput}
+                  style={[styles.textInput, { fontFamily: 'PatrickHand_400Regular' }]}
                   placeholder="Enter your achievement title..."
-                  placeholderTextColor="#A0A0A0"
+                  placeholderTextColor="#666666"
                   value={title}
                   onChangeText={setTitle}
                   maxLength={100}
                   multiline
                 />
-                <Text style={styles.charCount}>{title.length}/100</Text>
+                <Text style={[styles.charCount, { fontFamily: 'PatrickHand_400Regular' }]}>
+                  {title.length}/100
+                </Text>
               </View>
 
               {/* Small Image */}
               <View style={styles.inputSection}>
-                <Text style={styles.label}>Preview Image</Text>
+                <Text style={[styles.label, { fontFamily: 'PatrickHand_400Regular' }]}>
+                  Preview Image
+                </Text>
                 <TouchableOpacity
                   style={styles.imageUpload}
                   onPress={() => pickImage('small')}
@@ -187,8 +207,10 @@ export default function AddAchievementModal({ visible, onClose, onAdd }: AddAchi
                     <Image source={{ uri: smallImage }} style={styles.previewImage} />
                   ) : (
                     <View style={styles.uploadPlaceholder}>
-                      <Camera size={32} color="#9B61E5" />
-                      <Text style={styles.uploadText}>Tap to select image</Text>
+                      <Camera size={32} color="#666666" />
+                      <Text style={[styles.uploadText, { fontFamily: 'PatrickHand_400Regular' }]}>
+                        Tap to select image
+                      </Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -196,7 +218,9 @@ export default function AddAchievementModal({ visible, onClose, onAdd }: AddAchi
 
               {/* Full Image */}
               <View style={styles.inputSection}>
-                <Text style={styles.label}>Full Image</Text>
+                <Text style={[styles.label, { fontFamily: 'PatrickHand_400Regular' }]}>
+                  Full Image
+                </Text>
                 <TouchableOpacity
                   style={styles.imageUpload}
                   onPress={() => pickImage('full')}
@@ -205,32 +229,32 @@ export default function AddAchievementModal({ visible, onClose, onAdd }: AddAchi
                     <Image source={{ uri: fullImage }} style={styles.previewImageFull} />
                   ) : (
                     <View style={styles.uploadPlaceholder}>
-                      <Upload size={32} color="#9B61E5" />
-                      <Text style={styles.uploadText}>Tap to select image</Text>
+                      <Upload size={32} color="#666666" />
+                      <Text style={[styles.uploadText, { fontFamily: 'PatrickHand_400Regular' }]}>
+                        Tap to select image
+                      </Text>
                     </View>
                   )}
                 </TouchableOpacity>
               </View>
-            </ScrollView>
 
-            {/* Footer */}
-            <View style={styles.footer}>
+              {/* Submit Button */}
               <TouchableOpacity
                 style={[styles.submitButton, isSubmitting && styles.disabledButton]}
                 onPress={handleSubmit}
                 disabled={isSubmitting}
               >
                 <LinearGradient
-                  colors={isSubmitting ? ['#666666', '#555555'] : ['#9B61E5', '#7A4AE6']}
+                  colors={isSubmitting ? ['#999999', '#777777'] : ['#A259FF', '#7A4AE6']}
                   style={styles.submitGradient}
                 >
-                  <Text style={styles.submitText}>
+                  <Text style={[styles.submitText, { fontFamily: 'PatrickHand_400Regular' }]}>
                     {isSubmitting ? 'Adding...' : 'Add Achievement'}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
-            </View>
-          </LinearGradient>
+            </ScrollView>
+          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -253,97 +277,130 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: width * 0.9,
-    maxHeight: height * 0.8,
-    borderRadius: 16,
-    overflow: 'hidden',
+    maxHeight: height * 0.85,
   },
-  modalGradient: {
-    flex: 1,
+  stickyNoteModal: {
+    backgroundColor: '#FFF5B7',
+    borderRadius: 12,
+    padding: 24,
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 16,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(155, 97, 229, 0.3)',
+  pin: {
+    position: 'absolute',
+    top: 12,
+    left: '50%',
+    marginLeft: -10,
+    width: 20,
+    height: 20,
+    backgroundColor: '#DC2626',
+    borderRadius: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  ruledLines: {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 24,
+  },
+  ruledLine: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginVertical: 16,
   },
   closeButton: {
-    padding: 4,
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 16,
+    zIndex: 10,
   },
   content: {
     flex: 1,
-    padding: 20,
+    marginTop: 16,
+    zIndex: 1,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'normal',
+    color: '#2D3748',
+    textAlign: 'center',
+    marginBottom: 24,
   },
   inputSection: {
     marginBottom: 24,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'normal',
+    color: '#2D3748',
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(155, 97, 229, 0.3)',
+    borderColor: '#E0E0E0',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    color: '#FFFFFF',
+    color: '#2D3748',
     fontSize: 16,
     minHeight: 80,
     textAlignVertical: 'top',
   },
   charCount: {
-    fontSize: 12,
-    color: '#A0A0A0',
+    fontSize: 14,
+    color: '#666666',
     textAlign: 'right',
     marginTop: 4,
   },
   imageUpload: {
     height: 120,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 2,
-    borderColor: 'rgba(155, 97, 229, 0.3)',
+    borderColor: '#E0E0E0',
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
   uploadPlaceholder: {
     alignItems: 'center',
   },
   uploadText: {
-    color: '#9B61E5',
-    fontSize: 14,
+    color: '#666666',
+    fontSize: 16,
     marginTop: 8,
-    fontWeight: '500',
+    fontWeight: 'normal',
   },
   previewImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    borderRadius: 6,
   },
   previewImageFull: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
-  },
-  footer: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(155, 97, 229, 0.3)',
+    borderRadius: 6,
   },
   submitButton: {
     borderRadius: 12,
     overflow: 'hidden',
+    marginBottom: 20,
   },
   disabledButton: {
     opacity: 0.7,
@@ -355,8 +412,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   submitText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: 'normal',
     color: '#FFFFFF',
   },
 });

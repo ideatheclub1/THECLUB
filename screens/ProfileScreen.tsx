@@ -13,8 +13,11 @@ import {
   Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Share2, Settings, Grid2x2 as Grid, Camera, UserPlus, UserMinus, MessageCircle, Crown, DollarSign, Shield, MapPin, Clock, CreditCard as Edit3, Chrome as Home, TrendingUp, ArrowRight, ArrowLeft, Flag, Bell, Heart, UserCheck, Clock3, X, ChevronLeft, ChevronRight, Star } from 'lucide-react-native';
+import { Share2, Settings, Grid2x2 as Grid, Camera, UserPlus, UserMinus, MessageCircle, Crown, DollarSign, Shield, MapPin, Clock, CreditCard as Edit3, Chrome as Home, TrendingUp, ArrowRight, ArrowLeft, Flag, Bell, Heart, UserCheck, Clock3, X, ChevronLeft, ChevronRight, Star, Trophy } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useFonts, PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
+import { Caveat_400Regular } from '@expo-google-fonts/caveat';
+import * as SplashScreen from 'expo-splash-screen';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -29,7 +32,7 @@ import FullScreenPostViewer from '../components/FullScreenPostViewer';
 import AchievementsSection from '../components/AchievementsSection';
 
 const { width } = Dimensions.get('window');
-const imageSize = (width - 56) / 3; // 3 columns with more padding
+const imageSize = (width - 56) / 3;
 
 interface Notification {
   id: string;
@@ -66,71 +69,16 @@ const mockNotifications: Notification[] = [
     isRead: false,
     avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
   },
-  {
-    id: '3',
-    type: 'previous_host',
-    title: 'Previous Host Message',
-    message: 'Emma Wilson sent you a message',
-    timestamp: '1 hour ago',
-    isRead: true,
-    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150'
-  },
-  {
-    id: '4',
-    type: 'like',
-    title: 'New Like',
-    message: 'David Rodriguez liked your profile',
-    timestamp: '3 hours ago',
-    isRead: true,
-    avatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150'
-  },
-  {
-    id: '5',
-    type: 'client_request',
-    title: 'New Client Request',
-    message: 'Lisa Thompson wants to schedule a session',
-    timestamp: '1 day ago',
-    isRead: true,
-    avatar: 'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150'
-  }
 ];
 
-// Mock photos for users
 const mockPhotos: { [userId: string]: Photo[] } = {
-  '1': [ // Current user photos
+  '1': [
     { id: '1', uri: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Beautiful sunset' },
     { id: '2', uri: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'City lights' },
     { id: '3', uri: 'https://images.pexels.com/photos/1181271/pexels-photo-1181271.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Nature walk' },
     { id: '4', uri: 'https://images.pexels.com/photos/1181276/pexels-photo-1181276.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Coffee time' },
     { id: '5', uri: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Weekend vibes' },
     { id: '6', uri: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Art gallery' },
-  ],
-  '2': [ // neon_dreamer photos
-    { id: '1', uri: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Digital art creation' },
-    { id: '2', uri: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Neon nights' },
-    { id: '3', uri: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Creative workspace' },
-    { id: '4', uri: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Inspiration' },
-  ],
-  '3': [ // purple_vibes photos
-    { id: '1', uri: 'https://images.pexels.com/photos/1181271/pexels-photo-1181271.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Purple dreams' },
-    { id: '2', uri: 'https://images.pexels.com/photos/1181276/pexels-photo-1181276.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Aesthetic vibes' },
-    { id: '3', uri: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Color therapy' },
-    { id: '4', uri: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Purple rain' },
-    { id: '5', uri: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Lavender fields' },
-  ],
-  '4': [ // cosmic_soul photos
-    { id: '1', uri: 'https://images.pexels.com/photos/1181276/pexels-photo-1181276.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Stargazing night' },
-    { id: '2', uri: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Cosmic meditation' },
-    { id: '3', uri: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Universe connection' },
-  ],
-  '5': [ // cyber_punk photos
-    { id: '1', uri: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Future tech' },
-    { id: '2', uri: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Cyberpunk aesthetic' },
-    { id: '3', uri: 'https://images.pexels.com/photos/1181271/pexels-photo-1181271.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Digital world' },
-    { id: '4', uri: 'https://images.pexels.com/photos/1181276/pexels-photo-1181276.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Tech innovation' },
-    { id: '5', uri: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Future is now' },
-    { id: '6', uri: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Neon dreams' },
-    { id: '7', uri: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Digital art' },
   ],
 };
 
@@ -146,13 +94,9 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
   const router = useRouter();
   const params = useLocalSearchParams<{ userId: string }>();
   
-  // Get userId from route params or URL params, default to current user
   const userId = route?.params?.userId || params?.userId || '1';
-  
-  // If userId is "me", treat as current user
   const actualUserId = userId === 'me' ? '1' : userId;
-  
-  const isCurrentUser = userId === '1'; // Current user is luna_mystic (ID: '1')
+  const isCurrentUser = userId === '1';
   
   const [user, setUser] = useState<User>(() => {
     const foundUser = mockUsers.find(u => u.id === actualUserId);
@@ -173,6 +117,18 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
   const notificationBounce = useSharedValue(0);
   const profileGlow = useSharedValue(0);
 
+  // Font loading
+  const [fontsLoaded] = useFonts({
+    PatrickHand_400Regular,
+    Caveat_400Regular,
+  });
+
+  React.useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
   React.useEffect(() => {
     if (unreadCount > 0) {
       notificationBounce.value = withRepeat(
@@ -192,6 +148,7 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
       true
     );
   }, []);
+
   const handleUserPress = (userId: string) => {
     if (userId === '1') {
       Alert.alert(
@@ -276,7 +233,6 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
 
   const handleNotifications = () => {
     setShowNotifications(!showNotifications);
-    // Mark all notifications as read when opened
     if (!showNotifications) {
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     }
@@ -349,10 +305,11 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
 
   const profileGlowStyle = useAnimatedStyle(() => {
     return {
-      shadowOpacity: interpolate(profileGlow.value, [0, 1], [0.3, 0.7]),
-      shadowRadius: interpolate(profileGlow.value, [0, 1], [8, 16]),
+      shadowOpacity: interpolate(profileGlow.value, [0, 1], [0.4, 0.8]),
+      shadowRadius: interpolate(profileGlow.value, [0, 1], [10, 20]),
     };
   });
+
   const renderPost = ({ item, index }: { item: Post; index: number }) => (
     <TouchableOpacity
       style={[styles.gridItem, { marginRight: (index + 1) % 3 === 0 ? 0 : 4 }]}
@@ -377,7 +334,6 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
         </View>
       )}
       
-      {/* Like count overlay */}
       <View style={styles.likeCountOverlay}>
         <Heart size={12} color="#FFFFFF" fill="#FFFFFF" />
         <Text style={styles.likeCountText}>{item.likes}</Text>
@@ -389,203 +345,130 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
-        size={14}
+        size={12}
         color={index < Math.floor(rating) ? '#FFD700' : '#666'}
         fill={index < Math.floor(rating) ? '#FFD700' : 'transparent'}
       />
     ));
   };
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#0f0518', '#1a0a2e', '#16213e', '#0f0518']}
+        colors={['#2A1A55', '#1E0D36', '#0F0518', '#2A1A55']}
         style={styles.background}
       >
-        {/* Header */}
-        <View style={styles.header}>
+        {/* Modern Header */}
+        <View style={styles.modernHeader}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color="#c77dff" />
+            <View style={styles.glassmorphButton}>
+              <ArrowLeft size={20} color="#FFFFFF" />
+            </View>
           </TouchableOpacity>
-          <View style={styles.headerActions}>
-            <TouchableOpacity onPress={handleHomeNavigation} style={styles.headerIcon}>
-              <Home size={20} color="#c77dff" />
-            </TouchableOpacity>
-            {!isCurrentUser && (
-              <TouchableOpacity onPress={handleReportUser} style={styles.headerIcon}>
-                <Flag size={20} color="#c77dff" />
-              </TouchableOpacity>
-            )}
+          
+          <View style={styles.headerIcons}>
             {isCurrentUser && (
-              <Animated.View style={notificationAnimatedStyle}>
-                <TouchableOpacity onPress={handleNotifications} style={styles.headerIcon}>
-                <Bell size={20} color="#c77dff" />
-                {unreadCount > 0 && (
-                  <View style={styles.notificationBadge}>
-                    <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+              <Animated.View style={[styles.headerIcon, notificationAnimatedStyle]}>
+                <TouchableOpacity onPress={handleNotifications}>
+                  <View style={styles.glassmorphButton}>
+                    <Bell size={20} color="#FFFFFF" />
+                    {unreadCount > 0 && (
+                      <View style={styles.notificationBadge}>
+                        <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+                      </View>
+                    )}
                   </View>
-                )}
-              </TouchableOpacity>
+                </TouchableOpacity>
               </Animated.View>
             )}
-            <TouchableOpacity onPress={handleMessages} style={styles.messagesButton}>
-              <MessageCircle size={20} color="#c77dff" />
+            
+            <TouchableOpacity onPress={handleMessages} style={styles.headerIcon}>
+              <View style={styles.glassmorphButton}>
+                <MessageCircle size={20} color="#FFFFFF" />
+              </View>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Register as Host Section */}
-        {isCurrentUser && !user.isHost && (
-          <View style={styles.registerHostSection}>
-            <Text style={styles.registerHostTitle}>Register as Host</Text>
-            <Text style={styles.registerHostSubtitle}>
-              Want to start earning? Share your expertise and connect with people who value meaningful conversations.
-            </Text>
-            <TouchableOpacity style={styles.registerHostButton} onPress={handleRegisterAsHost}>
-              <LinearGradient
-                colors={['#00D46A', '#059669']}
-                style={styles.registerHostGradient}
-              >
-                <Text style={styles.registerHostText}>Register as Host</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        )}
-
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Notifications Panel */}
-          {showNotifications && isCurrentUser && (
-            <View style={styles.notificationsPanel}>
-              <Text style={styles.notificationsPanelTitle}>Notifications</Text>
-              {notifications.map((notification) => (
-                <View key={notification.id} style={[
-                  styles.notificationItem,
-                  !notification.isRead && styles.unreadNotification
-                ]}>
-                  <View style={styles.notificationIcon}>
-                    {getNotificationIcon(notification.type)}
-                  </View>
-                  <View style={styles.notificationContent}>
-                    <View style={styles.notificationHeader}>
-                      <Text style={styles.notificationTitle}>{notification.title}</Text>
-                      <Text style={styles.notificationTimestamp}>{notification.timestamp}</Text>
-                    </View>
-                    <Text style={styles.notificationMessage}>{notification.message}</Text>
-                  </View>
-                  {notification.avatar && (
-                    <Image source={{ uri: notification.avatar }} style={styles.notificationAvatar} />
-                  )}
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Profile Header Section */}
-          <View style={styles.profileSection}>
-            {/* Profile Image and Stats */}
-            <View style={styles.profileHeader}>
-              <View style={styles.profileImageContainer}>
-                <Animated.View style={[styles.profileImageWrapper, profileGlowStyle]}>
+          {/* Profile Header with Gradient Background */}
+          <View style={styles.profileHeaderSection}>
+            <LinearGradient
+              colors={['rgba(162, 89, 255, 0.3)', 'rgba(162, 89, 255, 0.1)', 'transparent']}
+              style={styles.profileGradientBg}
+            />
+            
+            {/* Centered Profile Image */}
+            <View style={styles.centeredProfileContainer}>
+              <Animated.View style={[styles.profileImageWrapper, profileGlowStyle]}>
                 <Image source={{ uri: user.avatar }} style={styles.profileImage} />
                 {user.isHost && (
-                  <View style={styles.hostBadge}>
-                    <Crown size={12} color="#ffd700" />
+                  <View style={styles.crownBadge}>
+                    <Crown size={16} color="#FFD700" fill="#FFD700" />
                   </View>
                 )}
-                </Animated.View>
-              </View>
-              
-              {/* Profile Stats */}
-              <View style={styles.statsContainer}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{userPosts.length}</Text>
-                  <Text style={styles.statLabel}>Posts</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>17.8K</Text>
-                  <Text style={styles.statLabel}>Followers</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>856</Text>
-                  <Text style={styles.statLabel}>Following</Text>
-                </View>
-              </View>
+              </Animated.View>
             </View>
 
-            {/* User Details */}
-            <View style={styles.userDetailsSection}>
-              <View style={styles.nameRatingContainer}>
-                <Text style={styles.username}>{user.username}</Text>
-                {user.isHost && (
-                  <View style={styles.ratingContainer}>
-                    {renderStars(4.8)}
-                    <Text style={styles.ratingText}>4.8</Text>
-                  </View>
-                )}
-              </View>
+            {/* User Info Centered */}
+            <View style={styles.centeredUserInfo}>
+              <Text style={styles.username}>{user.username}</Text>
               
-              {/* Location and Age */}
               <View style={styles.locationAgeContainer}>
                 <View style={styles.locationContainer}>
-                  <MapPin size={14} color="#a855f7" />
+                  <MapPin size={14} color="#888888" />
                   <Text style={styles.locationText}>{user.location}</Text>
                 </View>
                 <Text style={styles.ageText}>• {user.age} years old</Text>
               </View>
               
-              {/* Bio */}
               <Text style={styles.bio}>{user.bio}</Text>
             </View>
 
-            {/* Available for Chat Section */}
-            {user.isHost && !isCurrentUser && (
-              <View style={styles.availableChatSection}>
-                <Text style={styles.availableChatTitle}>Available for Chat</Text>
-                <TouchableOpacity style={styles.bookChatButton} onPress={handleBookChat}>
-                  <LinearGradient
-                    colors={['#10b981', '#059669']}
-                    style={styles.bookChatGradient}
-                  >
-                    <MessageCircle size={20} color="#ffffff" />
-                    <Text style={styles.bookChatText}>Book 1-Hour Chat</Text>
-                    <View style={styles.priceTag}>
-                      <DollarSign size={14} color="#000000" />
-                      <Text style={styles.priceText}>{user.hourlyRate}/hr</Text>
-                    </View>
-                    <View style={styles.ratingInfo}>
-                      <Text style={styles.ratingText}>4.8</Text>
-                      <Text style={styles.ratingLabel}>Rating</Text>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
+            {/* Stats Row */}
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{userPosts.length}</Text>
+                <Text style={styles.statLabel}>Posts</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>17.8K</Text>
+                <Text style={styles.statLabel}>Followers</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>856</Text>
+                <Text style={styles.statLabel}>Following</Text>
+              </View>
+            </View>
 
-                {/* Response Time and Total Chats */}
-                <View style={styles.responseTimeContainer}>
-                  <Clock size={14} color="#10b981" />
-                  <Text style={styles.responseTimeText}>Usually responds in {user.responseTime}</Text>
+            {/* Rating */}
+            {user.isHost && (
+              <View style={styles.ratingSection}>
+                <View style={styles.starsContainer}>
+                  {renderStars(4.8)}
                 </View>
-                <View style={styles.totalChatsContainer}>
-                  <MessageCircle size={14} color="#9B61E5" />
-                  <Text style={styles.totalChatsText}>{user.totalChats} total chats completed</Text>
-                </View>
+                <Text style={styles.ratingNumber}>4.8</Text>
+                <Text style={styles.ratingLabel}>Rating</Text>
               </View>
             )}
 
             {/* Action Buttons */}
             <View style={styles.actionButtons}>
               {isCurrentUser ? (
-                // Current user: Show Edit Profile only
                 <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
                   <LinearGradient
-                    colors={['#A259FF', '#8B3DFF']}
+                    colors={['#A259FF', '#7A4AE6']}
                     style={styles.editProfileGradient}
                   >
-                  <Edit3 size={16} color="#e0aaff" />
-                  <Text style={styles.editProfileText}>Edit Profile</Text>
+                    <Edit3 size={16} color="#FFFFFF" />
+                    <Text style={styles.editProfileText}>Edit Profile</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               ) : (
-                // Other users: Show Follow/Message/Block
                 <View style={styles.socialButtons}>
                   <TouchableOpacity 
                     style={[styles.followButton, isFollowing && styles.followingButton]} 
@@ -594,7 +477,7 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
                     {isFollowing ? (
                       <UserMinus size={16} color="#ffffff" />
                     ) : (
-                      <UserPlus size={16} color="#c77dff" />
+                      <UserPlus size={16} color="#A259FF" />
                     )}
                     <Text style={[styles.followButtonText, isFollowing && styles.followingButtonText]}>
                       {isFollowing ? 'Unfollow' : 'Follow'}
@@ -602,29 +485,24 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
                   </TouchableOpacity>
                   
                   <TouchableOpacity style={styles.messageButton} onPress={handleMessages}>
-                    <MessageCircle size={16} color="#9B61E5" />
+                    <MessageCircle size={16} color="#A259FF" />
                     <Text style={styles.messageButtonText}>Message</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity style={styles.blockButton} onPress={handleBlock}>
-                    <Shield size={16} color="#ef4444" />
-                    <Text style={styles.blockButtonText}>Block</Text>
                   </TouchableOpacity>
                 </View>
               )}
             </View>
           </View>
 
-          {/* Posts Grid Header */}
-          <View style={styles.postsHeader}>
-            <Grid size={20} color="#e0aaff" />
-            <Text style={styles.postsHeaderText}>Posts</Text>
-          </View>
-
           {/* Achievements Section - Only for current user */}
           {isCurrentUser && (
             <AchievementsSection />
           )}
+
+          {/* Posts Grid Header */}
+          <View style={styles.postsHeader}>
+            <Grid size={20} color="#FFFFFF" />
+            <Text style={styles.postsHeaderText}>Posts</Text>
+          </View>
 
           {/* Posts Grid */}
           {userPosts.length > 0 ? (
@@ -667,244 +545,117 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
   },
-  header: {
+  modernHeader: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
     paddingTop: 10,
-    position: 'relative',
-    backgroundColor: '#121212',
+    paddingBottom: 20,
+    zIndex: 10,
   },
   backButton: {
-    position: 'absolute',
-    left: 20,
-    top: 10,
-    padding: 8,
-    backgroundColor: '#121212',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#9B61E5',
     zIndex: 1,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
+  glassmorphButton: {
+    padding: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    position: 'relative',
   },
-  headerActions: {
+  headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
   headerIcon: {
-    padding: 8,
-    backgroundColor: '#121212',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#9B61E5',
     position: 'relative',
   },
   notificationBadge: {
     position: 'absolute',
     top: -2,
     right: -2,
-    backgroundColor: '#9B61E5',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+    backgroundColor: '#A259FF',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   notificationBadgeText: {
     fontSize: 10,
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
-  messagesButton: {
-    padding: 8,
-    backgroundColor: '#121212',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-  },
-  notificationsPanel: {
-    marginHorizontal: 16,
-    marginBottom: 20,
-    backgroundColor: '#121212',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-    padding: 16,
-  },
-  notificationsPanelTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 16,
-  },
-  notificationItem: {
-    flexDirection: 'row',
+  profileHeaderSection: {
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: 'rgba(155, 97, 229, 0.1)',
-  },
-  unreadNotification: {
-    backgroundColor: '#121212',
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-  },
-  notificationIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#121212',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  notificationContent: {
-    flex: 1,
-  },
-  notificationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  notificationTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  notificationTimestamp: {
-    fontSize: 12,
-    color: '#A0A0A0',
-    opacity: 0.8,
-  },
-  notificationMessage: {
-    fontSize: 13,
-    color: '#A0A0A0',
-    lineHeight: 18,
-  },
-  notificationAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginLeft: 8,
-  },
-  profileSection: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-    marginBottom: 30,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-    marginBottom: 16,
-  },
-  profileImageContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 30,
     position: 'relative',
-    marginRight: 20,
+  },
+  profileGradientBg: {
+    position: 'absolute',
+    top: -50,
+    left: 0,
+    right: 0,
+    height: 200,
+    zIndex: -1,
+  },
+  centeredProfileContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
   profileImageWrapper: {
     shadowColor: '#A259FF',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.6,
+    shadowRadius: 15,
+    elevation: 10,
   },
   profileImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    borderWidth: 2,
-    borderColor: '#A259FF',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     borderWidth: 3,
-    borderColor: '#9B61E5',
+    borderColor: '#A259FF',
   },
-  hostBadge: {
+  crownBadge: {
     position: 'absolute',
-    top: -5,
-    right: -5,
-    backgroundColor: '#121212',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
+    top: -8,
+    right: -8,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#ffd700',
+    borderColor: '#FFD700',
   },
-  statsContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
+  centeredUserInfo: {
     alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: '700',
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  statLabel: {
-    fontSize: 13,
-    color: '#A0A0A0',
-    fontWeight: '400',
-    marginTop: 2,
-  },
-  userDetailsSection: {
-    marginBottom: 24,
-    marginBottom: 20,
-  },
-  nameRatingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    marginBottom: 8,
+    marginBottom: 30,
   },
   username: {
-    fontSize: 16,
-    fontWeight: '700',
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: 'bold',
     color: '#FFFFFF',
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  starsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingInfo: {
-    alignItems: 'center',
-  },
-  ratingText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFD700',
-  },
-  ratingLabel: {
-    fontSize: 10,
-    color: '#A0A0A0',
-    fontWeight: '400',
+    marginBottom: 8,
   },
   locationAgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-    marginBottom: 8,
   },
   locationContainer: {
     flexDirection: 'row',
@@ -913,88 +664,60 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 14,
     color: '#888888',
-    color: '#A0A0A0',
     marginLeft: 4,
   },
   ageText: {
     fontSize: 14,
     color: '#888888',
-    color: '#A0A0A0',
     marginLeft: 8,
   },
   bio: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#FFFFFF',
-    lineHeight: 18,
-    fontWeight: '400',
+    textAlign: 'center',
+    lineHeight: 22,
+    opacity: 0.9,
   },
-  availableChatSection: {
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
     marginBottom: 20,
   },
-  availableChatTitle: {
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#888888',
+    marginTop: 2,
+  },
+  ratingSection: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  ratingNumber: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 12,
+    color: '#FFD700',
+    marginBottom: 2,
   },
-  bookChatButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  bookChatGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    position: 'relative',
-  },
-  bookChatText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginLeft: 8,
-    marginRight: 12,
-  },
-  priceTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  priceText: {
+  ratingLabel: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginLeft: 2,
-  },
-  responseTimeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  responseTimeText: {
-    fontSize: 12,
-    color: '#00D46A',
-    marginLeft: 4,
-  },
-  totalChatsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-  },
-  totalChatsText: {
-    fontSize: 12,
-    color: '#9B61E5',
-    marginLeft: 4,
+    color: '#888888',
   },
   actionButtons: {
-    marginBottom: 20,
+    width: '100%',
   },
   editProfileButton: {
     borderRadius: 12,
@@ -1004,7 +727,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 20,
   },
   editProfileText: {
@@ -1015,25 +738,24 @@ const styles = StyleSheet.create({
   },
   socialButtons: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
   followButton: {
-    flex: 2,
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#121212',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
-    borderColor: '#9B61E5',
+    borderColor: '#A259FF',
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   followingButton: {
-    backgroundColor: '#9B61E5',
-    borderColor: '#9B61E5',
+    backgroundColor: '#A259FF',
   },
   followButtonText: {
-    color: '#9B61E5',
+    color: '#A259FF',
     fontWeight: '600',
     marginLeft: 8,
     fontSize: 16,
@@ -1042,35 +764,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   messageButton: {
-    flex: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#121212',
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-    borderRadius: 12,
-    paddingVertical: 12,
-  },
-  messageButtonText: {
-    color: '#9B61E5',
-    fontWeight: '600',
-    marginLeft: 8,
-    fontSize: 16,
-  },
-  blockButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#121212',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
-    borderColor: '#9B61E5',
+    borderColor: '#A259FF',
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
-  blockButtonText: {
-    color: '#9B61E5',
+  messageButtonText: {
+    color: '#A259FF',
     fontWeight: '600',
     marginLeft: 8,
     fontSize: 16,
@@ -1079,8 +784,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   postsHeaderText: {
     fontSize: 18,
@@ -1089,7 +794,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   postsGrid: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingBottom: 20,
   },
   row: {
@@ -1121,7 +826,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 8,
-    backgroundColor: 'rgba(155, 97, 229, 0.2)',
   },
   gridPlaceholderText: {
     fontSize: 10,
@@ -1157,11 +861,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   emptyState: {
-    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 50,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   emptyText: {
     fontSize: 18,
@@ -1171,45 +874,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#A0A0A0',
+    color: '#888888',
     textAlign: 'center',
-  },
-  registerHostSection: {
-    marginHorizontal: 16,
-    marginBottom: 20,
-    padding: 16,
-    backgroundColor: '#121212',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-  },
-  registerHostTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  registerHostSubtitle: {
-    fontSize: 14,
-    color: '#A0A0A0',
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  registerHostButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  registerHostGradient: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  registerHostText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
   },
 });

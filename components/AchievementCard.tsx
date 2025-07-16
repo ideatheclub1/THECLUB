@@ -8,6 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts, PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -37,6 +38,10 @@ interface AchievementCardProps {
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function AchievementCard({ achievement, onImagePress, index }: AchievementCardProps) {
+  const [fontsLoaded] = useFonts({
+    PatrickHand_400Regular,
+  });
+
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
 
@@ -77,6 +82,10 @@ export default function AchievementCard({ achievement, onImagePress, index }: Ac
     };
   });
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <AnimatedTouchableOpacity
       style={[styles.cardContainer, cardAnimatedStyle, shadowAnimatedStyle]}
@@ -84,19 +93,20 @@ export default function AchievementCard({ achievement, onImagePress, index }: Ac
       onPressOut={handlePressOut}
       activeOpacity={0.9}
     >
-      <LinearGradient
-        colors={[
-          index % 3 === 0 ? '#FFE066' : index % 3 === 1 ? '#66E0FF' : '#FF66E0',
-          index % 3 === 0 ? '#FFD93D' : index % 3 === 1 ? '#3DD4FF' : '#FF3DD4',
-        ]}
-        style={styles.card}
-      >
+      <View style={styles.card}>
         {/* Pin effect */}
         <View style={styles.pin} />
         
+        {/* Ruled lines background */}
+        <View style={styles.ruledLines}>
+          {[...Array(8)].map((_, i) => (
+            <View key={i} style={styles.ruledLine} />
+          ))}
+        </View>
+        
         {/* Content */}
         <View style={styles.cardContent}>
-          <Text style={styles.title} numberOfLines={3}>
+          <Text style={[styles.title, { fontFamily: 'PatrickHand_400Regular' }]} numberOfLines={3}>
             {achievement.title}
           </Text>
           
@@ -110,13 +120,15 @@ export default function AchievementCard({ achievement, onImagePress, index }: Ac
               resizeMode="cover"
             />
             <View style={styles.imageOverlay}>
-              <Text style={styles.tapText}>Tap to view</Text>
+              <Text style={styles.tapText}>tap to view</Text>
             </View>
           </TouchableOpacity>
           
-          <Text style={styles.date}>{achievement.createdAt}</Text>
+          <Text style={[styles.date, { fontFamily: 'PatrickHand_400Regular' }]}>
+            {achievement.createdAt}
+          </Text>
         </View>
-      </LinearGradient>
+      </View>
     </AnimatedTouchableOpacity>
   );
 }
@@ -132,10 +144,13 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   card: {
-    borderRadius: 16,
+    backgroundColor: '#FFF5B7',
+    borderRadius: 8,
     padding: 16,
-    minHeight: 200,
+    minHeight: 220,
     position: 'relative',
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
   },
   pin: {
     position: 'absolute',
@@ -144,7 +159,7 @@ const styles = StyleSheet.create({
     marginLeft: -8,
     width: 16,
     height: 16,
-    backgroundColor: '#ff4444',
+    backgroundColor: '#DC2626',
     borderRadius: 8,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
@@ -152,19 +167,33 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
+  ruledLines: {
+    position: 'absolute',
+    top: 30,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+  },
+  ruledLine: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginVertical: 12,
+  },
   cardContent: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 12,
+    zIndex: 1,
   },
   title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333333',
+    fontSize: 18,
+    fontWeight: 'normal',
+    color: '#2D3748',
     textAlign: 'center',
     marginBottom: 12,
-    lineHeight: 20,
+    lineHeight: 24,
   },
   imageContainer: {
     position: 'relative',
@@ -175,7 +204,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#333333',
+    borderColor: '#2D3748',
   },
   imageOverlay: {
     position: 'absolute',
@@ -194,8 +223,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   date: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666666',
-    fontWeight: '500',
+    fontWeight: 'normal',
   },
 });

@@ -9,6 +9,7 @@ import {
   Text,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts, PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -35,6 +36,10 @@ interface ImageViewerModalProps {
 }
 
 export default function ImageViewerModal({ visible, achievement, onClose }: ImageViewerModalProps) {
+  const [fontsLoaded] = useFonts({
+    PatrickHand_400Regular,
+  });
+
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
 
@@ -68,7 +73,7 @@ export default function ImageViewerModal({ visible, achievement, onClose }: Imag
     });
   };
 
-  if (!achievement) return null;
+  if (!achievement || !fontsLoaded) return null;
 
   return (
     <Modal
@@ -81,34 +86,41 @@ export default function ImageViewerModal({ visible, achievement, onClose }: Imag
         <Animated.View style={[styles.backdrop, backdropStyle]} />
         
         <Animated.View style={[styles.modalContent, animatedStyle]}>
-          <LinearGradient
-            colors={['#1a0a2e', '#16213e', '#0f0518']}
-            style={styles.modalGradient}
-          >
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.modalTitle} numberOfLines={2}>
+          <View style={styles.stickyNoteModal}>
+            {/* Pin */}
+            <View style={styles.pin} />
+            
+            {/* Ruled lines */}
+            <View style={styles.ruledLines}>
+              {[...Array(12)].map((_, i) => (
+                <View key={i} style={styles.ruledLine} />
+              ))}
+            </View>
+            
+            {/* Close button */}
+            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+              <X size={24} color="#2D3748" />
+            </TouchableOpacity>
+
+            {/* Content */}
+            <View style={styles.modalContentInner}>
+              <Text style={[styles.modalTitle, { fontFamily: 'PatrickHand_400Regular' }]} numberOfLines={3}>
                 {achievement.title}
               </Text>
-              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-                <X size={24} color="#FFFFFF" />
-              </TouchableOpacity>
+              
+              <View style={styles.imageContainer}>
+                <Image
+                  source={{ uri: achievement.fullImage }}
+                  style={styles.fullImage}
+                  resizeMode="contain"
+                />
+              </View>
+              
+              <Text style={[styles.modalDate, { fontFamily: 'PatrickHand_400Regular' }]}>
+                Achievement earned on {achievement.createdAt}
+              </Text>
             </View>
-
-            {/* Image */}
-            <View style={styles.imageContainer}>
-              <Image
-                source={{ uri: achievement.fullImage }}
-                style={styles.fullImage}
-                resizeMode="contain"
-              />
-            </View>
-
-            {/* Date */}
-            <View style={styles.footer}>
-              <Text style={styles.date}>Achievement earned on {achievement.createdAt}</Text>
-            </View>
-          </LinearGradient>
+          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -132,49 +144,85 @@ const styles = StyleSheet.create({
   modalContent: {
     width: width * 0.9,
     maxHeight: height * 0.8,
-    borderRadius: 16,
-    overflow: 'hidden',
   },
-  modalGradient: {
-    flex: 1,
+  stickyNoteModal: {
+    backgroundColor: '#FFF5B7',
+    borderRadius: 12,
+    padding: 24,
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 16,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(155, 97, 229, 0.3)',
+  pin: {
+    position: 'absolute',
+    top: 12,
+    left: '50%',
+    marginLeft: -10,
+    width: 20,
+    height: 20,
+    backgroundColor: '#DC2626',
+    borderRadius: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    flex: 1,
-    marginRight: 16,
+  ruledLines: {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 24,
+  },
+  ruledLine: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginVertical: 16,
   },
   closeButton: {
-    padding: 4,
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 16,
+    zIndex: 10,
+  },
+  modalContentInner: {
+    alignItems: 'center',
+    marginTop: 16,
+    zIndex: 1,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'normal',
+    color: '#2D3748',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 28,
   },
   imageContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    marginBottom: 20,
     alignItems: 'center',
-    padding: 20,
   },
   fullImage: {
-    width: '100%',
-    height: '100%',
+    width: width * 0.7,
+    height: width * 0.7,
     borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#2D3748',
   },
-  footer: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(155, 97, 229, 0.3)',
-  },
-  date: {
-    fontSize: 14,
-    color: '#A0A0A0',
+  modalDate: {
+    fontSize: 16,
+    color: '#666666',
     textAlign: 'center',
+    fontWeight: 'normal',
   },
 });

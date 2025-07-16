@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts, PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Plus, Trophy } from 'lucide-react-native';
 import AchievementCard from './AchievementCard';
@@ -50,6 +51,10 @@ const mockAchievements: Achievement[] = [
 ];
 
 export default function AchievementsSection() {
+  const [fontsLoaded] = useFonts({
+    PatrickHand_400Regular,
+  });
+
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
   const [showImageViewer, setShowImageViewer] = useState(false);
@@ -118,15 +123,17 @@ export default function AchievementsSection() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Trophy size={48} color="#9B61E5" />
-      <Text style={styles.emptyTitle}>No achievements yet</Text>
-      <Text style={styles.emptySubtitle}>
+      <Trophy size={48} color="#A259FF" />
+      <Text style={[styles.emptyTitle, { fontFamily: 'PatrickHand_400Regular' }]}>
+        No achievements yet
+      </Text>
+      <Text style={[styles.emptySubtitle, { fontFamily: 'PatrickHand_400Regular' }]}>
         Add your first achievement to get started!
       </Text>
     </View>
   );
 
-  if (loading) {
+  if (!fontsLoaded || loading) {
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>Loading achievements...</Text>
@@ -139,10 +146,12 @@ export default function AchievementsSection() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Trophy size={20} color="#9B61E5" />
-          <Text style={styles.sectionTitle}>Achievements</Text>
+          <Trophy size={20} color="#A259FF" />
+          <Text style={[styles.sectionTitle, { fontFamily: 'PatrickHand_400Regular' }]}>
+            Achievements
+          </Text>
         </View>
-        <Text style={styles.achievementCount}>
+        <Text style={[styles.achievementCount, { fontFamily: 'PatrickHand_400Regular' }]}>
           {achievements.length} achievement{achievements.length !== 1 ? 's' : ''}
         </Text>
       </View>
@@ -168,11 +177,13 @@ export default function AchievementsSection() {
         onPress={() => setShowAddModal(true)}
       >
         <LinearGradient
-          colors={['#9B61E5', '#7A4AE6']}
+          colors={['#A259FF', '#7A4AE6']}
           style={styles.addButtonGradient}
         >
           <Plus size={20} color="#FFFFFF" />
-          <Text style={styles.addButtonText}>Add Achievement</Text>
+          <Text style={[styles.addButtonText, { fontFamily: 'PatrickHand_400Regular' }]}>
+            Add Achievement
+          </Text>
         </LinearGradient>
       </TouchableOpacity>
 
@@ -201,7 +212,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     marginBottom: 16,
   },
   headerLeft: {
@@ -209,40 +220,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: 'normal',
     color: '#FFFFFF',
     marginLeft: 8,
   },
   achievementCount: {
-    fontSize: 14,
-    color: '#A0A0A0',
+    fontSize: 16,
+    color: '#888888',
   },
   listContainer: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 8,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: 'normal',
     color: '#FFFFFF',
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
-    fontSize: 14,
-    color: '#A0A0A0',
+    fontSize: 16,
+    color: '#888888',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   addButton: {
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     marginTop: 16,
     borderRadius: 12,
     overflow: 'hidden',
@@ -251,12 +262,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 20,
   },
   addButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: 'normal',
     color: '#FFFFFF',
     marginLeft: 8,
   },
@@ -267,6 +278,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#A0A0A0',
+    color: '#888888',
   },
 });
