@@ -20,7 +20,7 @@ import Animated, {
   interpolate,
   runOnJS,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Play, RefreshCw } from 'lucide-react-native';
 import ReelItem from '../components/ReelItem';
 import { mockReels, Reel } from '../data/mockReels';
@@ -138,37 +138,39 @@ export default function ReelsScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" backgroundColor="#000000" />
       
-      <FlatList
-        ref={flatListRef}
-        data={reels}
-        renderItem={renderReel}
-        keyExtractor={(item) => item.id}
-        pagingEnabled
-        showsVerticalScrollIndicator={false}
-        snapToInterval={SCREEN_HEIGHT}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            tintColor="#9B61E5"
-            progressBackgroundColor="#000000"
-          />
-        }
-        getItemLayout={(data, index) => ({
-          length: SCREEN_HEIGHT,
-          offset: SCREEN_HEIGHT * index,
-          index,
-        })}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={2}
-        windowSize={3}
-        initialNumToRender={1}
-        style={styles.flatList}
-      />
+      <GestureHandlerRootView style={styles.gestureContainer}>
+        <FlatList
+          ref={flatListRef}
+          data={reels}
+          renderItem={renderReel}
+          keyExtractor={(item) => item.id}
+          pagingEnabled
+          showsVerticalScrollIndicator={false}
+          snapToInterval={SCREEN_HEIGHT}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor="#9B61E5"
+              progressBackgroundColor="#000000"
+            />
+          }
+          getItemLayout={(data, index) => ({
+            length: SCREEN_HEIGHT,
+            offset: SCREEN_HEIGHT * index,
+            index,
+          })}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={2}
+          windowSize={3}
+          initialNumToRender={1}
+          style={styles.flatList}
+        />
+      </GestureHandlerRootView>
     </SafeAreaView>
   );
 }
@@ -177,6 +179,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+  },
+  gestureContainer: {
+    flex: 1,
   },
   flatList: {
     flex: 1,
