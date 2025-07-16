@@ -20,7 +20,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { X, Heart, MessageCircle, UserPlus, AtSign, AlertCircle, Trash2 } from 'lucide-react-native';
+import { X, Heart, MessageCircle, UserPlus, AtSign, CircleAlert as AlertCircle, Trash2 } from 'lucide-react-native';
 
 const { height } = Dimensions.get('window');
 
