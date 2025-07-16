@@ -17,10 +17,10 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { DollarSign, Star } from 'lucide-react-native';
+import { DollarSign, Star, Eye } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
-const cardWidth = width * 0.7;
+const cardWidth = width * 0.8;
 
 interface Note {
   id: string;
@@ -50,7 +50,7 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
   const crinkle = useSharedValue(0);
 
   // Generate slight rotation for realistic effect
-  const baseRotation = (index % 2 === 0 ? 1 : -1) * (Math.random() * 3 + 1);
+  const baseRotation = (index % 2 === 0 ? 1 : -1) * (Math.random() * 2 + 0.5);
 
   React.useEffect(() => {
     rotation.value = withSpring(baseRotation, { damping: 20 });
@@ -58,8 +58,8 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
 
   const handlePressIn = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    scale.value = withSpring(0.94);
-    crinkle.value = withSpring(0.5);
+    scale.value = withSpring(0.96);
+    crinkle.value = withSpring(0.4);
   };
 
   const handlePressOut = () => {
@@ -77,16 +77,17 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
       transform: [
         { scale: scale.value },
         { rotate: `${rotation.value}deg` },
-        { perspective: 1000 },
-        { rotateY: `${crinkle.value * 3}deg` },
+        { perspective: 1200 },
+        { rotateX: `${crinkle.value * 2}deg` },
+        { rotateY: `${crinkle.value * 1.5}deg` },
       ],
     };
   });
 
   const shadowAnimatedStyle = useAnimatedStyle(() => {
     return {
-      shadowOpacity: interpolate(scale.value, [0.94, 1], [0.4, 0.7]),
-      shadowRadius: interpolate(scale.value, [0.94, 1], [20, 30]),
+      shadowOpacity: interpolate(scale.value, [0.96, 1], [0.3, 0.6]),
+      shadowRadius: interpolate(scale.value, [0.96, 1], [15, 25]),
     };
   });
 
@@ -102,84 +103,97 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
       activeOpacity={0.9}
     >
       <LinearGradient
-        colors={['#1B4332', '#2D5016', '#40531B', '#1B4332']}
-        style={styles.currencyCard}
+        colors={['#2F5233', '#1E3A20', '#4A6B3A', '#2F5233']}
+        style={styles.dollarBill}
       >
-        {/* Worn edges effect */}
-        <View style={styles.wornEdges}>
-          <View style={[styles.wornEdge, styles.topEdge]} />
-          <View style={[styles.wornEdge, styles.bottomEdge]} />
-          <View style={[styles.wornEdge, styles.leftEdge]} />
-          <View style={[styles.wornEdge, styles.rightEdge]} />
+        {/* Aged paper texture overlay */}
+        <View style={styles.paperTexture}>
+          <View style={[styles.ageSpot, styles.spot1]} />
+          <View style={[styles.ageSpot, styles.spot2]} />
+          <View style={[styles.ageSpot, styles.spot3]} />
+          <View style={[styles.ageSpot, styles.spot4]} />
         </View>
         
-        {/* Ornate border pattern */}
-        <View style={styles.ornatePattern}>
-          <View style={styles.borderPattern} />
-          <View style={[styles.borderPattern, styles.innerBorder]} />
+        {/* Torn edges effect */}
+        <View style={styles.tornEdges}>
+          <View style={[styles.tear, styles.topTear]} />
+          <View style={[styles.tear, styles.bottomTear]} />
+          <View style={[styles.tear, styles.leftTear]} />
+          <View style={[styles.tear, styles.rightTear]} />
         </View>
         
-        {/* Vintage texture overlay */}
-        <View style={styles.textureOverlay}>
-          <View style={[styles.textureSpot, styles.spot1]} />
-          <View style={[styles.textureSpot, styles.spot2]} />
-          <View style={[styles.textureSpot, styles.spot3]} />
+        {/* Vintage dollar bill border */}
+        <View style={styles.dollarBorder}>
+          <View style={styles.outerBorder} />
+          <View style={styles.innerBorder} />
+          <View style={styles.decorativeBorder} />
         </View>
         
-        {/* Header */}
-        <View style={styles.currencyHeader}>
-          <Text style={[styles.currencyTitle, { fontFamily: 'PatrickHand_400Regular' }]}>
-            ACHIEVEMENT NOTE
-          </Text>
-          <View style={styles.serialNumber}>
-            <Text style={styles.serialText}>#{note.id}</Text>
+        {/* Dollar bill serial number */}
+        <View style={styles.serialSection}>
+          <Text style={styles.serialText}>A{note.id}4567890B</Text>
+        </View>
+        
+        {/* Federal reserve seal area */}
+        <View style={styles.sealArea}>
+          <View style={styles.federalSeal}>
+            <Text style={styles.sealText}>FEDERAL</Text>
+            <Text style={styles.sealText}>RESERVE</Text>
           </View>
         </View>
         
-        {/* Content */}
-        <View style={styles.currencyContent}>
-          <View style={styles.amountSection}>
-            <DollarSign size={28} color="#D4AF37" />
-            <Text style={[styles.amount, { fontFamily: 'PatrickHand_400Regular' }]}>
-              {note.amount || 0}
-            </Text>
+        {/* Main content area */}
+        <View style={styles.mainContent}>
+          <View style={styles.leftSection}>
+            <View style={styles.portraitFrame}>
+              <TouchableOpacity onPress={handleImagePress}>
+                <Image
+                  source={{ uri: note.smallImage }}
+                  style={styles.portraitImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.portraitOverlay}>
+                  <Eye size={12} color="#1E3A20" />
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
           
-          <Text style={[styles.currencyDescription, { fontFamily: 'PatrickHand_400Regular' }]} numberOfLines={2}>
-            {note.title}
-          </Text>
-          
-          <TouchableOpacity
-            style={styles.imageContainer}
-            onPress={handleImagePress}
-          >
-            <Image
-              source={{ uri: note.smallImage }}
-              style={styles.smallImage}
-              resizeMode="cover"
-            />
-            <View style={styles.imageOverlay}>
-              <Text style={[styles.tapText, { fontFamily: 'PatrickHand_400Regular' }]}>
-                tap to view
+          <View style={styles.rightSection}>
+            <View style={styles.denominationArea}>
+              <Text style={styles.dollarSymbol}>$</Text>
+              <Text style={styles.denomination}>{note.amount || 1}</Text>
+            </View>
+            
+            <View style={styles.achievementInfo}>
+              <Text style={[styles.achievementTitle, { fontFamily: 'PatrickHand_400Regular' }]}>
+                ACHIEVEMENT
+              </Text>
+              <Text style={[styles.achievementDesc, { fontFamily: 'PatrickHand_400Regular' }]} numberOfLines={2}>
+                {note.title}
               </Text>
             </View>
-          </TouchableOpacity>
-          
-          <Text style={[styles.date, { fontFamily: 'PatrickHand_400Regular' }]}>
-            Earned: {note.createdAt}
+          </View>
+        </View>
+        
+        {/* Bottom section */}
+        <View style={styles.bottomSection}>
+          <Text style={styles.treasuryText}>
+            TREASURY ACHIEVEMENT • {note.createdAt}
           </Text>
         </View>
         
-        {/* Footer */}
-        <View style={styles.currencyFooter}>
-          <View style={styles.starPattern}>
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} size={8} color="#D4AF37" fill="#D4AF37" />
-            ))}
-          </View>
-          <Text style={[styles.footerText, { fontFamily: 'PatrickHand_400Regular' }]}>
-            VERIFIED ACHIEVEMENT
-          </Text>
+        {/* Vintage patterns */}
+        <View style={styles.vintagePatterns}>
+          <View style={styles.cornerPattern1} />
+          <View style={styles.cornerPattern2} />
+          <View style={styles.cornerPattern3} />
+          <View style={styles.cornerPattern4} />
+        </View>
+        
+        {/* Watermark effect */}
+        <View style={styles.watermark}>
+          <Text style={styles.watermarkText}>VERIFIED</Text>
         </View>
       </LinearGradient>
     </AnimatedTouchableOpacity>
@@ -190,200 +204,312 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: cardWidth,
     marginHorizontal: 8,
-    shadowColor: '#1B4332',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.6,
-    shadowRadius: 25,
-    elevation: 15,
+    shadowColor: '#1E3A20',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 12,
   },
-  currencyCard: {
-    borderRadius: 16,
-    padding: 24,
-    minHeight: 320,
+  dollarBill: {
+    borderRadius: 8,
+    minHeight: 160,
     position: 'relative',
-    borderWidth: 3,
-    borderColor: '#D4AF37',
+    borderWidth: 2,
+    borderColor: '#4A6B3A',
   },
-  wornEdges: {
+  paperTexture: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
-  wornEdge: {
+  ageSpot: {
     position: 'absolute',
-    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+    backgroundColor: 'rgba(139, 90, 50, 0.1)',
+    borderRadius: 15,
   },
-  topEdge: {
-    top: 0,
-    left: 20,
-    right: 30,
-    height: 2,
-    borderRadius: 1,
-  },
-  bottomEdge: {
-    bottom: 0,
-    left: 25,
-    right: 20,
-    height: 2,
-    borderRadius: 1,
-  },
-  leftEdge: {
-    left: 0,
-    top: 30,
-    bottom: 25,
-    width: 2,
-    borderRadius: 1,
-  },
-  rightEdge: {
-    right: 0,
+  spot1: {
     top: 20,
-    bottom: 30,
-    width: 2,
-    borderRadius: 1,
+    right: 30,
+    width: 25,
+    height: 20,
   },
-  ornatePattern: {
+  spot2: {
+    bottom: 40,
+    left: 25,
+    width: 30,
+    height: 18,
+  },
+  spot3: {
+    top: 60,
+    left: 60,
+    width: 20,
+    height: 25,
+  },
+  spot4: {
+    bottom: 20,
+    right: 60,
+    width: 22,
+    height: 15,
+  },
+  tornEdges: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  tear: {
+    position: 'absolute',
+    backgroundColor: 'rgba(139, 90, 50, 0.15)',
+  },
+  topTear: {
+    top: 0,
+    left: 40,
+    width: 30,
+    height: 3,
+    transform: [{ rotate: '5deg' }],
+  },
+  bottomTear: {
+    bottom: 0,
+    right: 35,
+    width: 25,
+    height: 3,
+    transform: [{ rotate: '-3deg' }],
+  },
+  leftTear: {
+    left: 0,
+    top: 50,
+    width: 3,
+    height: 20,
+    transform: [{ rotate: '2deg' }],
+  },
+  rightTear: {
+    right: 0,
+    top: 80,
+    width: 3,
+    height: 15,
+    transform: [{ rotate: '-2deg' }],
+  },
+  dollarBorder: {
     position: 'absolute',
     top: 8,
     left: 8,
     right: 8,
     bottom: 8,
   },
-  borderPattern: {
+  outerBorder: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
     borderWidth: 1,
-    borderColor: '#D4AF37',
-    borderRadius: 12,
-    opacity: 0.7,
+    borderColor: '#6B8E23',
+    borderStyle: 'solid',
   },
   innerBorder: {
-    top: 6,
-    left: 6,
-    right: 6,
-    bottom: 6,
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    right: 4,
+    bottom: 4,
+    borderWidth: 1,
+    borderColor: '#9ACD32',
+    borderStyle: 'dashed',
+    opacity: 0.6,
+  },
+  decorativeBorder: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: 8,
+    bottom: 8,
+    borderWidth: 1,
+    borderColor: '#8FBC8F',
     opacity: 0.4,
   },
-  textureOverlay: {
+  serialSection: {
+    position: 'absolute',
+    top: 12,
+    left: 16,
+  },
+  serialText: {
+    fontSize: 8,
+    color: '#2F4F2F',
+    fontFamily: 'monospace',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  sealArea: {
+    position: 'absolute',
+    top: 12,
+    right: 16,
+    alignItems: 'center',
+  },
+  federalSeal: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(47, 79, 47, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2F4F2F',
+  },
+  sealText: {
+    fontSize: 6,
+    color: '#2F4F2F',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    lineHeight: 8,
+  },
+  mainContent: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 35,
+    paddingBottom: 25,
+    alignItems: 'center',
+  },
+  leftSection: {
+    flex: 1,
+  },
+  portraitFrame: {
+    width: 60,
+    height: 75,
+    borderWidth: 2,
+    borderColor: '#2F4F2F',
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(47, 79, 47, 0.1)',
+  },
+  portraitImage: {
+    width: '100%',
+    height: '100%',
+  },
+  portraitOverlay: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 8,
+    padding: 2,
+  },
+  rightSection: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  denominationArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  dollarSymbol: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2F4F2F',
+    marginRight: 4,
+  },
+  denomination: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#2F4F2F',
+    fontFamily: 'serif',
+  },
+  achievementInfo: {
+    alignItems: 'center',
+  },
+  achievementTitle: {
+    fontSize: 10,
+    color: '#2F4F2F',
+    fontWeight: 'bold',
+    marginBottom: 4,
+    letterSpacing: 1,
+  },
+  achievementDesc: {
+    fontSize: 9,
+    color: '#2F4F2F',
+    textAlign: 'center',
+    lineHeight: 12,
+    opacity: 0.8,
+  },
+  bottomSection: {
+    position: 'absolute',
+    bottom: 12,
+    left: 16,
+    right: 16,
+    alignItems: 'center',
+  },
+  treasuryText: {
+    fontSize: 7,
+    color: '#2F4F2F',
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  vintagePatterns: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
-  textureSpot: {
+  cornerPattern1: {
     position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    borderRadius: 20,
+    top: 16,
+    left: 16,
+    width: 15,
+    height: 15,
+    borderWidth: 1,
+    borderColor: '#6B8E23',
+    borderRadius: 2,
+    opacity: 0.3,
   },
-  spot1: {
-    top: 40,
-    left: 30,
-    width: 30,
-    height: 25,
+  cornerPattern2: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 15,
+    height: 15,
+    borderWidth: 1,
+    borderColor: '#6B8E23',
+    borderRadius: 2,
+    opacity: 0.3,
   },
-  spot2: {
-    top: 200,
-    right: 40,
-    width: 25,
-    height: 20,
+  cornerPattern3: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    width: 15,
+    height: 15,
+    borderWidth: 1,
+    borderColor: '#6B8E23',
+    borderRadius: 2,
+    opacity: 0.3,
   },
-  spot3: {
-    bottom: 80,
-    left: 50,
-    width: 35,
-    height: 30,
+  cornerPattern4: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    width: 15,
+    height: 15,
+    borderWidth: 1,
+    borderColor: '#6B8E23',
+    borderRadius: 2,
+    opacity: 0.3,
   },
-  currencyHeader: {
-    alignItems: 'center',
-    marginBottom: 20,
+  watermark: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -30 }, { translateY: -8 }],
+    opacity: 0.1,
   },
-  currencyTitle: {
-    fontSize: 14,
-    color: '#D4AF37',
-    fontWeight: 'normal',
-    letterSpacing: 2,
-  },
-  serialNumber: {
-    marginTop: 6,
-  },
-  serialText: {
-    fontSize: 11,
-    color: '#A0C4A0',
-    fontFamily: 'monospace',
-    letterSpacing: 1,
-  },
-  currencyContent: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  amountSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  amount: {
-    fontSize: 32,
-    color: '#D4AF37',
-    fontWeight: 'normal',
-    marginLeft: 8,
-  },
-  currencyDescription: {
+  watermarkText: {
     fontSize: 16,
-    color: '#E8F5E8',
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 22,
-  },
-  imageContainer: {
-    position: 'relative',
-    marginBottom: 16,
-  },
-  smallImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#D4AF37',
-  },
-  imageOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderBottomLeftRadius: 6,
-    borderBottomRightRadius: 6,
-    paddingVertical: 2,
-  },
-  tapText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    textAlign: 'center',
-    fontWeight: 'normal',
-  },
-  date: {
-    fontSize: 12,
-    color: '#A0C4A0',
-    fontWeight: 'normal',
-  },
-  currencyFooter: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  starPattern: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 6,
-  },
-  footerText: {
-    fontSize: 10,
-    color: '#D4AF37',
-    fontWeight: 'normal',
-    letterSpacing: 1.5,
+    fontWeight: 'bold',
+    color: '#2F4F2F',
+    transform: [{ rotate: '-15deg' }],
   },
 });

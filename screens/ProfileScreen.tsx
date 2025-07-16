@@ -31,6 +31,8 @@ import { mockUsers, mockPosts } from '../data/mockData';
 import { Post, User } from '../types';
 import FullScreenPostViewer from '../components/FullScreenPostViewer';
 import BulletinBoardSection from '../components/BulletinBoardSection';
+import CoverPhotoModal from '../components/CoverPhotoModal';
+import NotificationPanel from '../components/NotificationPanel';
 
 const { width, height } = Dimensions.get('window');
 const imageSize = (width - 56) / 3;
@@ -66,6 +68,9 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
   const [showFullScreenPost, setShowFullScreenPost] = useState(false);
   const [selectedPostIndex, setSelectedPostIndex] = useState(0);
   const [coverImage, setCoverImage] = useState('https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=800');
+  const [showCoverModal, setShowCoverModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
 
   // Animation values
   const scrollY = useSharedValue(0);
@@ -121,20 +126,15 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
     router.push('/messages');
   };
 
-  const handleUploadCover = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 1,
-    });
+  const handleUploadCover = () => {
+    setShowCoverModal(true);
+  };
 
-    if (!result.canceled) {
-      coverFade.value = withTiming(0, { duration: 300 }, () => {
-        runOnJS(setCoverImage)(result.assets[0].uri);
-        coverFade.value = withTiming(1, { duration: 600 });
-      });
-    }
+  const handleCoverImageSelected = (imageUri: string) => {
+    coverFade.value = withTiming(0, { duration: 300 }, () => {
+      runOnJS(setCoverImage)(imageUri);
+      coverFade.value = withTiming(1, { duration: 600 });
+    });
   };
 
   const handlePostPress = (post: Post) => {
@@ -159,6 +159,26 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
 
   const handleComment = (postId: string) => {
     Alert.alert('Comment', 'Comment functionality would be implemented here');
+  };
+
+  const handleNotificationPress = () => {
+    setShowNotifications(true);
+  };
+
+  const handleNotificationItemPress = (notification: any) => {
+    console.log('Notification pressed:', notification);
+  };
+
+  const handleMarkAsRead = (notificationId: string) => {
+    setNotifications(prev => 
+      prev.map(n => 
+        n.id === notificationId ? { ...n, isRead: true } : n
+      )
+    );
+  };
+
+  const handleDeleteNotification = (notificationId: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
   };
 
   // Animated styles
@@ -313,7 +333,7 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
             <Text style={styles.miniHeaderTitle}>{user.username}</Text>
             <View style={styles.headerRight}>
               <Animated.View style={notificationAnimatedStyle}>
-                <TouchableOpacity style={styles.headerIcon}>
+                <TouchableOpacity style={styles.headerIcon} onPress={handleNotificationPress}>
                   <Bell size={20} color="#FFFFFF" />
                   <View style={styles.notificationBadge}>
                     <Text style={styles.notificationText}>2</Text>
@@ -499,6 +519,23 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
           onClose={() => setShowFullScreenPost(false)}
           onLike={handleLike}
           onComment={handleComment}
+        />
+
+        {/* Cover Photo Modal */}
+        <CoverPhotoModal
+          visible={showCoverModal}
+          onClose={() => setShowCoverModal(false)}
+          onImageSelected={handleCoverImageSelected}
+        />
+
+        {/* Notification Panel */}
+        <NotificationPanel
+          visible={showNotifications}
+          onClose={() => setShowNotifications(false)}
+          notifications={notifications}
+          onNotificationPress={handleNotificationItemPress}
+          onMarkAsRead={handleMarkAsRead}
+          onDeleteNotification={handleDeleteNotification}
         />
       </LinearGradient>
     </View>
