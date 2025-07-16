@@ -24,6 +24,8 @@ import Animated, {
 import { PanGestureHandler, PanGestureHandlerGestureEvent } from 'react-native-gesture-handler';
 import { X, Heart, MessageCircle, Share2, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import { Post } from '../types';
+import { useComments } from '../contexts/CommentContext';
+import CommentSystem from './CommentSystem';
 
 interface FullScreenPostViewerProps {
   visible: boolean;
@@ -49,6 +51,8 @@ export default function FullScreenPostViewer({
   const flatListRef = useRef<FlatList>(null);
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
+  const [showComments, setShowComments] = useState(false);
+  const { getCommentCount } = useComments();
 
   const currentPost = posts[currentIndex];
 
@@ -134,7 +138,11 @@ export default function FullScreenPostViewer({
   };
 
   const handleComment = () => {
-    onComment(currentPost.id);
+    setShowComments(true);
+  };
+
+  const handleCloseComments = () => {
+    setShowComments(false);
   };
 
   const handleShare = () => {
@@ -168,103 +176,115 @@ export default function FullScreenPostViewer({
 
   if (!visible || !currentPost) return null;
 
+  const commentCount = getCommentCount(currentPost.id);
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={handleClose}
-    >
-      <StatusBar hidden />
-      <Animated.View style={[styles.backdrop, backgroundStyle]} />
-      
-      <PanGestureHandler onGestureEvent={gestureHandler}>
-        <Animated.View style={[styles.container, animatedStyle]}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity 
-              style={styles.userInfo}
-              onPress={() => handleUserPress(currentPost.user.id)}
-            >
-              <Image source={{ uri: currentPost.user.avatar }} style={styles.avatar} />
-              <Text style={styles.username}>{currentPost.user.username}</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <X size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Post Content */}
-          <FlatList
-            ref={flatListRef}
-            data={posts}
-            renderItem={renderPost}
-            keyExtractor={(item) => item.id}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-            getItemLayout={(data, index) => ({
-              length: width,
-              offset: width * index,
-              index,
-            })}
-          />
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            {/* Actions */}
-            <View style={styles.actions}>
-              <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-                <Heart
-                  size={28}
-                  color={currentPost.isLiked ? '#ff6b9d' : '#FFFFFF'}
-                  fill={currentPost.isLiked ? '#ff6b9d' : 'transparent'}
-                />
+    <>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={handleClose}
+      >
+        <StatusBar hidden />
+        <Animated.View style={[styles.backdrop, backgroundStyle]} />
+        
+        <PanGestureHandler onGestureEvent={gestureHandler}>
+          <Animated.View style={[styles.container, animatedStyle]}>
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity 
+                style={styles.userInfo}
+                onPress={() => handleUserPress(currentPost.user.id)}
+              >
+                <Image source={{ uri: currentPost.user.avatar }} style={styles.avatar} />
+                <Text style={styles.username}>{currentPost.user.username}</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity style={styles.actionButton} onPress={handleComment}>
-                <MessageCircle size={28} color="#FFFFFF" />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-                <Share2 size={28} color="#FFFFFF" />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.actionButton} onPress={handleMore}>
-                <MoreHorizontal size={28} color="#FFFFFF" />
+              
+              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                <X size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
-            {/* Post Info */}
-            <View style={styles.postInfo}>
-              <Text style={styles.likes}>{currentPost.likes} likes</Text>
-              <Text style={styles.content}>
-                <Text style={styles.contentUsername}>{currentPost.user.username}</Text>
-                {' '}
-                <Text style={styles.contentText}>{currentPost.content}</Text>
-              </Text>
-              <TouchableOpacity onPress={handleComment}>
-                <Text style={styles.viewComments}>
-                  View all {currentPost.comments} comments
+            {/* Post Content */}
+            <FlatList
+              ref={flatListRef}
+              data={posts}
+              renderItem={renderPost}
+              keyExtractor={(item) => item.id}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onViewableItemsChanged={onViewableItemsChanged}
+              viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+              getItemLayout={(data, index) => ({
+                length: width,
+                offset: width * index,
+                index,
+              })}
+            />
+
+            {/* Footer */}
+            <View style={styles.footer}>
+              {/* Actions */}
+              <View style={styles.actions}>
+                <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
+                  <Heart
+                    size={28}
+                    color={currentPost.isLiked ? '#ff6b9d' : '#FFFFFF'}
+                    fill={currentPost.isLiked ? '#ff6b9d' : 'transparent'}
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionButton} onPress={handleComment}>
+                  <MessageCircle size={28} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+                  <Share2 size={28} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionButton} onPress={handleMore}>
+                  <MoreHorizontal size={28} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Post Info */}
+              <View style={styles.postInfo}>
+                <Text style={styles.likes}>{currentPost.likes} likes</Text>
+                <Text style={styles.content}>
+                  <Text style={styles.contentUsername}>{currentPost.user.username}</Text>
+                  {' '}
+                  <Text style={styles.contentText}>{currentPost.content}</Text>
                 </Text>
-              </TouchableOpacity>
-              <Text style={styles.timestamp}>{currentPost.timestamp}</Text>
-            </View>
+                <TouchableOpacity onPress={handleComment}>
+                  <Text style={styles.viewComments}>
+                    {commentCount > 0 ? `View all ${commentCount} comments` : 'Add a comment...'}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.timestamp}>{currentPost.timestamp}</Text>
+              </View>
 
-            {/* Post Counter */}
-            <View style={styles.postCounter}>
-              <Text style={styles.counterText}>
-                {currentIndex + 1} of {posts.length}
-              </Text>
+              {/* Post Counter */}
+              <View style={styles.postCounter}>
+                <Text style={styles.counterText}>
+                  {currentIndex + 1} of {posts.length}
+                </Text>
+              </View>
             </View>
-          </View>
-        </Animated.View>
-      </PanGestureHandler>
-    </Modal>
+          </Animated.View>
+        </PanGestureHandler>
+      </Modal>
+      
+      {/* Comment System */}
+      <CommentSystem
+        visible={showComments}
+        onClose={handleCloseComments}
+        postId={currentPost.id}
+        postType="feed"
+      />
+    </>
   );
 }
 

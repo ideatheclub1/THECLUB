@@ -26,6 +26,8 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import { Heart, MessageCircle, Share2, Bookmark, Music, MoveHorizontal as MoreHorizontal, Volume2, VolumeX, Play, Pause } from 'lucide-react-native';
 import { Reel } from '../data/mockReels';
+import { useComments } from '../contexts/CommentContext';
+import CommentSystem from './CommentSystem';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -57,6 +59,8 @@ export default function ReelItem({
   const [isLiked, setIsLiked] = useState(reel.isLiked);
   const [isSaved, setIsSaved] = useState(reel.isSaved);
   const [likes, setLikes] = useState(reel.likes);
+  const [showComments, setShowComments] = useState(false);
+  const { getCommentCount } = useComments();
 
   // Animation values
   const likeScale = useSharedValue(1);
@@ -142,6 +146,14 @@ export default function ReelItem({
     onSave(reel.id);
   };
 
+  const handleCommentPress = () => {
+    setShowComments(true);
+  };
+
+  const handleCloseComments = () => {
+    setShowComments(false);
+  };
+
   const handlePlayPause = () => {
     if (isPlaying) {
       videoRef.current?.pauseAsync();
@@ -224,167 +236,179 @@ export default function ReelItem({
     return num.toString();
   };
 
+  const commentCount = getCommentCount(reel.id);
+
   return (
-    <View style={styles.container}>
-      <GestureDetector gesture={tapGesture}>
-        <View style={styles.videoContainer}>
-          <Video
-            ref={videoRef}
-            style={styles.video}
-            source={{ uri: reel.videoUrl }}
-            resizeMode={ResizeMode.COVER}
-            shouldPlay={isActive && isPlaying}
-            isLooping
-            isMuted={isMuted}
-            onPlaybackStatusUpdate={(status) => {
-              if (status.isLoaded) {
-                setIsLoading(false);
-                if (status.durationMillis) {
-                  setProgress(status.positionMillis! / status.durationMillis);
+    <>
+      <View style={styles.container}>
+        <GestureDetector gesture={tapGesture}>
+          <View style={styles.videoContainer}>
+            <Video
+              ref={videoRef}
+              style={styles.video}
+              source={{ uri: reel.videoUrl }}
+              resizeMode={ResizeMode.COVER}
+              shouldPlay={isActive && isPlaying}
+              isLooping
+              isMuted={isMuted}
+              onPlaybackStatusUpdate={(status) => {
+                if (status.isLoaded) {
+                  setIsLoading(false);
+                  if (status.durationMillis) {
+                    setProgress(status.positionMillis! / status.durationMillis);
+                  }
                 }
-              }
-            }}
-          />
+              }}
+            />
+            
+            {/* Loading indicator */}
+            {isLoading && (
+              <View style={styles.loadingContainer}>
+                <View style={styles.loadingSpinner} />
+              </View>
+            )}
+            
+            {/* Play button overlay */}
+            <Animated.View style={[styles.playButtonOverlay, playButtonStyle]}>
+              <View style={styles.playButton}>
+                <Play size={32} color="#FFFFFF" fill="#FFFFFF" />
+              </View>
+            </Animated.View>
+            
+            {/* Heart explosion */}
+            <Animated.View style={[styles.heartExplosion, heartExplosionStyle]}>
+              <Heart size={80} color="#ff6b9d" fill="#ff6b9d" />
+            </Animated.View>
+          </View>
+        </GestureDetector>
+
+        {/* Progress bar */}
+        <View style={styles.progressContainer}>
+          <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+        </View>
+
+        {/* Top overlay */}
+        <View style={styles.topOverlay}>
+          <TouchableOpacity style={styles.userInfo} onPress={handleUserPress}>
+            <Image source={{ uri: reel.user.avatar }} style={styles.avatar} />
+            <View style={styles.userDetails}>
+              <Text style={styles.username}>{reel.user.username}</Text>
+              <Text style={styles.timestamp}>{reel.timestamp}</Text>
+            </View>
+          </TouchableOpacity>
           
-          {/* Loading indicator */}
-          {isLoading && (
-            <View style={styles.loadingContainer}>
-              <View style={styles.loadingSpinner} />
+          <View style={styles.topActions}>
+            <TouchableOpacity style={styles.volumeButton} onPress={handleVolumeToggle}>
+              {isMuted ? (
+                <VolumeX size={24} color="#FFFFFF" />
+              ) : (
+                <Volume2 size={24} color="#FFFFFF" />
+              )}
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.moreButton}>
+              <MoreHorizontal size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Volume slider */}
+        <Animated.View style={[styles.volumeSlider, volumeSliderStyle]}>
+          <View style={styles.volumeTrack}>
+            <View style={[styles.volumeFill, { height: '70%' }]} />
+          </View>
+        </Animated.View>
+
+        {/* Right side actions */}
+        <View style={styles.rightActions}>
+          <AnimatedTouchableOpacity
+            style={[styles.actionButton, likeAnimatedStyle]}
+            onPress={handleLike}
+          >
+            <Heart
+              size={28}
+              color={isLiked ? '#ff6b9d' : '#FFFFFF'}
+              fill={isLiked ? '#ff6b9d' : 'transparent'}
+            />
+            <Text style={styles.actionText}>{formatNumber(likes)}</Text>
+          </AnimatedTouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleCommentPress}
+          >
+            <MessageCircle size={28} color="#FFFFFF" />
+            <Text style={styles.actionText}>{formatNumber(commentCount)}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => onShare(reel.id)}
+          >
+            <Share2 size={28} color="#FFFFFF" />
+            <Text style={styles.actionText}>{formatNumber(reel.shares)}</Text>
+          </TouchableOpacity>
+
+          <AnimatedTouchableOpacity
+            style={[styles.actionButton, saveAnimatedStyle]}
+            onPress={handleSave}
+          >
+            <Bookmark
+              size={28}
+              color={isSaved ? '#9B61E5' : '#FFFFFF'}
+              fill={isSaved ? '#9B61E5' : 'transparent'}
+            />
+          </AnimatedTouchableOpacity>
+
+          {/* Music info */}
+          {reel.musicInfo && (
+            <TouchableOpacity style={styles.musicButton}>
+              <Animated.View style={[styles.musicIcon, musicRotationStyle]}>
+                <Music size={24} color="#FFFFFF" />
+              </Animated.View>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Bottom overlay */}
+        <View style={styles.bottomOverlay}>
+          <View style={styles.captionContainer}>
+            <Text style={styles.caption}>
+              <Text style={styles.captionUsername}>{reel.user.username}</Text>
+              {' '}
+              {reel.caption}
+            </Text>
+            
+            {/* Hashtags */}
+            <View style={styles.hashtagContainer}>
+              {reel.hashtags.map((hashtag, index) => (
+                <TouchableOpacity key={index} style={styles.hashtag}>
+                  <Text style={styles.hashtagText}>{hashtag}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Music info */}
+          {reel.musicInfo && (
+            <View style={styles.musicInfo}>
+              <Music size={16} color="#FFFFFF" />
+              <Text style={styles.musicText} numberOfLines={1}>
+                {reel.musicInfo.title} • {reel.musicInfo.artist}
+              </Text>
             </View>
           )}
-          
-          {/* Play button overlay */}
-          <Animated.View style={[styles.playButtonOverlay, playButtonStyle]}>
-            <View style={styles.playButton}>
-              <Play size={32} color="#FFFFFF" fill="#FFFFFF" />
-            </View>
-          </Animated.View>
-          
-          {/* Heart explosion */}
-          <Animated.View style={[styles.heartExplosion, heartExplosionStyle]}>
-            <Heart size={80} color="#ff6b9d" fill="#ff6b9d" />
-          </Animated.View>
-        </View>
-      </GestureDetector>
-
-      {/* Progress bar */}
-      <View style={styles.progressContainer}>
-        <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
-      </View>
-
-      {/* Top overlay */}
-      <View style={styles.topOverlay}>
-        <TouchableOpacity style={styles.userInfo} onPress={handleUserPress}>
-          <Image source={{ uri: reel.user.avatar }} style={styles.avatar} />
-          <View style={styles.userDetails}>
-            <Text style={styles.username}>{reel.user.username}</Text>
-            <Text style={styles.timestamp}>{reel.timestamp}</Text>
-          </View>
-        </TouchableOpacity>
-        
-        <View style={styles.topActions}>
-          <TouchableOpacity style={styles.volumeButton} onPress={handleVolumeToggle}>
-            {isMuted ? (
-              <VolumeX size={24} color="#FFFFFF" />
-            ) : (
-              <Volume2 size={24} color="#FFFFFF" />
-            )}
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.moreButton}>
-            <MoreHorizontal size={24} color="#FFFFFF" />
-          </TouchableOpacity>
         </View>
       </View>
-
-      {/* Volume slider */}
-      <Animated.View style={[styles.volumeSlider, volumeSliderStyle]}>
-        <View style={styles.volumeTrack}>
-          <View style={[styles.volumeFill, { height: '70%' }]} />
-        </View>
-      </Animated.View>
-
-      {/* Right side actions */}
-      <View style={styles.rightActions}>
-        <AnimatedTouchableOpacity
-          style={[styles.actionButton, likeAnimatedStyle]}
-          onPress={handleLike}
-        >
-          <Heart
-            size={28}
-            color={isLiked ? '#ff6b9d' : '#FFFFFF'}
-            fill={isLiked ? '#ff6b9d' : 'transparent'}
-          />
-          <Text style={styles.actionText}>{formatNumber(likes)}</Text>
-        </AnimatedTouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => onComment(reel.id)}
-        >
-          <MessageCircle size={28} color="#FFFFFF" />
-          <Text style={styles.actionText}>{formatNumber(reel.comments)}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => onShare(reel.id)}
-        >
-          <Share2 size={28} color="#FFFFFF" />
-          <Text style={styles.actionText}>{formatNumber(reel.shares)}</Text>
-        </TouchableOpacity>
-
-        <AnimatedTouchableOpacity
-          style={[styles.actionButton, saveAnimatedStyle]}
-          onPress={handleSave}
-        >
-          <Bookmark
-            size={28}
-            color={isSaved ? '#9B61E5' : '#FFFFFF'}
-            fill={isSaved ? '#9B61E5' : 'transparent'}
-          />
-        </AnimatedTouchableOpacity>
-
-        {/* Music info */}
-        {reel.musicInfo && (
-          <TouchableOpacity style={styles.musicButton}>
-            <Animated.View style={[styles.musicIcon, musicRotationStyle]}>
-              <Music size={24} color="#FFFFFF" />
-            </Animated.View>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Bottom overlay */}
-      <View style={styles.bottomOverlay}>
-        <View style={styles.captionContainer}>
-          <Text style={styles.caption}>
-            <Text style={styles.captionUsername}>{reel.user.username}</Text>
-            {' '}
-            {reel.caption}
-          </Text>
-          
-          {/* Hashtags */}
-          <View style={styles.hashtagContainer}>
-            {reel.hashtags.map((hashtag, index) => (
-              <TouchableOpacity key={index} style={styles.hashtag}>
-                <Text style={styles.hashtagText}>{hashtag}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Music info */}
-        {reel.musicInfo && (
-          <View style={styles.musicInfo}>
-            <Music size={16} color="#FFFFFF" />
-            <Text style={styles.musicText} numberOfLines={1}>
-              {reel.musicInfo.title} • {reel.musicInfo.artist}
-            </Text>
-          </View>
-        )}
-      </View>
-    </View>
+      
+      {/* Comment System */}
+      <CommentSystem
+        visible={showComments}
+        onClose={handleCloseComments}
+        postId={reel.id}
+        postType="reel"
+      />
+    </>
   );
 }
 

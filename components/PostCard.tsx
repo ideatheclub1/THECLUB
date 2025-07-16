@@ -19,6 +19,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Heart, MessageCircle, Share2, MoveHorizontal as MoreHorizontal, TrendingUp } from 'lucide-react-native';
 import { Post } from '../types';
+import { useComments } from '../contexts/CommentContext';
+import CommentSystem from './CommentSystem';
 
 interface PostCardProps {
   post: Post;
@@ -32,6 +34,8 @@ export default function PostCard({ post, onLike, onComment }: PostCardProps) {
   const router = useRouter();
   const [isLiked, setIsLiked] = useState(post.isLiked);
   const [likes, setLikes] = useState(post.likes);
+  const [showComments, setShowComments] = useState(false);
+  const { getCommentCount } = useComments();
   
   const likeScale = useSharedValue(1);
   const trendingGlow = useSharedValue(0);
@@ -54,6 +58,14 @@ export default function PostCard({ post, onLike, onComment }: PostCardProps) {
     setIsLiked(!isLiked);
     setLikes(isLiked ? likes - 1 : likes + 1);
     onLike(post.id);
+  };
+
+  const handleCommentPress = () => {
+    setShowComments(true);
+  };
+
+  const handleCloseComments = () => {
+    setShowComments(false);
   };
 
   const handleUserPress = () => {
@@ -90,85 +102,97 @@ export default function PostCard({ post, onLike, onComment }: PostCardProps) {
     };
   });
 
+  const commentCount = getCommentCount(post.id);
+
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.userInfo} onPress={handleUserPress}>
-          <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
-          <View style={styles.userDetails}>
-            <Text style={styles.username}>{post.user.username}</Text>
-            <Text style={styles.timestamp}>{post.timestamp}</Text>
+    <>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.userInfo} onPress={handleUserPress}>
+            <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
+            <View style={styles.userDetails}>
+              <Text style={styles.username}>{post.user.username}</Text>
+              <Text style={styles.timestamp}>{post.timestamp}</Text>
+            </View>
+          </TouchableOpacity>
+          
+          <View style={styles.headerRight}>
+            {post.isTrending && (
+              <Animated.View style={[styles.trendingBadge, trendingAnimatedStyle]}>
+                <TrendingUp size={12} color="#ff6b9d" />
+                <Text style={styles.trendingText}>Trending</Text>
+              </Animated.View>
+            )}
+            <TouchableOpacity style={styles.moreButton}>
+              <MoreHorizontal size={18} color="#ffffff" />
+            </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Image */}
+        {post.image && (
+          <Image source={{ uri: post.image }} style={styles.postImage} />
+        )}
+
+        {/* Actions */}
+        <View style={styles.actions}>
+          <View style={styles.leftActions}>
+            <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
+              <Animated.View style={likeAnimatedStyle}>
+                <Heart
+                  size={22}
+                  color={isLiked ? '#ff6b9d' : '#ffffff'}
+                  fill={isLiked ? '#ff6b9d' : 'transparent'}
+                />
+              </Animated.View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleCommentPress}
+            >
+              <MessageCircle size={22} color="#ffffff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionButton}>
+              <Share2 size={22} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Likes */}
+        <View style={styles.likesContainer}>
+          <Text style={[styles.likesText, isLiked && styles.likedText]}>
+            {likes} likes
+          </Text>
+        </View>
+
+        {/* Content */}
+        <View style={styles.contentContainer}>
+          <Text style={styles.content}>
+            <Text style={styles.contentUsername}>{post.user.username}</Text>
+            {' '}
+            <Text style={styles.contentText}>{post.content}</Text>
+          </Text>
+        </View>
+
+        {/* Comments */}
+        <TouchableOpacity onPress={handleCommentPress}>
+          <Text style={styles.viewComments}>
+            {commentCount > 0 ? `View all ${commentCount} comments` : 'Add a comment...'}
+          </Text>
         </TouchableOpacity>
-        
-        <View style={styles.headerRight}>
-          {post.isTrending && (
-            <Animated.View style={[styles.trendingBadge, trendingAnimatedStyle]}>
-              <TrendingUp size={12} color="#ff6b9d" />
-              <Text style={styles.trendingText}>Trending</Text>
-            </Animated.View>
-          )}
-          <TouchableOpacity style={styles.moreButton}>
-            <MoreHorizontal size={18} color="#ffffff" />
-          </TouchableOpacity>
-        </View>
       </View>
-
-      {/* Image */}
-      {post.image && (
-        <Image source={{ uri: post.image }} style={styles.postImage} />
-      )}
-
-      {/* Actions */}
-      <View style={styles.actions}>
-        <View style={styles.leftActions}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-            <Animated.View style={likeAnimatedStyle}>
-              <Heart
-                size={22}
-                color={isLiked ? '#ff6b9d' : '#ffffff'}
-                fill={isLiked ? '#ff6b9d' : 'transparent'}
-              />
-            </Animated.View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => onComment(post.id)}
-          >
-            <MessageCircle size={22} color="#ffffff" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton}>
-            <Share2 size={22} color="#ffffff" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Likes */}
-      <View style={styles.likesContainer}>
-        <Text style={[styles.likesText, isLiked && styles.likedText]}>
-          {likes} likes
-        </Text>
-      </View>
-
-      {/* Content */}
-      <View style={styles.contentContainer}>
-        <Text style={styles.content}>
-          <Text style={styles.contentUsername}>{post.user.username}</Text>
-          {' '}
-          <Text style={styles.contentText}>{post.content}</Text>
-        </Text>
-      </View>
-
-      {/* Comments */}
-      <TouchableOpacity onPress={() => onComment(post.id)}>
-        <Text style={styles.viewComments}>
-          View all {post.comments} comments
-        </Text>
-      </TouchableOpacity>
-    </View>
+      
+      {/* Comment System */}
+      <CommentSystem
+        visible={showComments}
+        onClose={handleCloseComments}
+        postId={post.id}
+        postType="feed"
+      />
+    </>
   );
 }
 
