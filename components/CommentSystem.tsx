@@ -24,7 +24,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Send, X, Heart, MessageCircle, MoveHorizontal as MoreHorizontal, Edit3, Trash2, Reply, ChevronRight } from 'lucide-react-native';
+import { Send, X, Heart, MessageCircle, MoveHorizontal as MoreHorizontal, CreditCard as Edit3, Trash2, Reply, ChevronRight } from 'lucide-react-native';
 import { useComments } from '../contexts/CommentContext';
 import { Comment } from '../types/comments';
 
