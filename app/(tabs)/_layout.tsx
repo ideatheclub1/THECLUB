@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, TrendingUp, Search, User } from 'lucide-react-native';
+import { Chrome as Home, TrendingUp, Search, User, Play } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -31,6 +31,15 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ size, color }) => (
             <Home size={size} color={color} strokeWidth={2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="reels"
+        options={{
+          title: 'Reels',
+          tabBarIcon: ({ size, color }) => (
+            <Play size={size} color={color} strokeWidth={2} />
           ),
         }}
       />
