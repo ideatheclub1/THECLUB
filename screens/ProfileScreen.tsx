@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,14 +10,16 @@ import {
   Alert,
   Dimensions,
   FlatList,
-  Modal,
+  ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Share2, Settings, Grid2x2 as Grid, Camera, UserPlus, UserMinus, MessageCircle, Crown, DollarSign, Shield, MapPin, Clock, CreditCard as Edit3, Chrome as Home, TrendingUp, ArrowRight, ArrowLeft, Flag, Bell, Heart, UserCheck, Clock3, X, ChevronLeft, ChevronRight, Star, Trophy } from 'lucide-react-native';
+import { BlurView } from 'expo-blur';
+import { Share2, Settings, Grid2x2 as Grid, Camera, UserPlus, UserMinus, MessageCircle, Crown, DollarSign, Shield, MapPin, Clock, CreditCard as Edit3, Chrome as Home, TrendingUp, ArrowRight, ArrowLeft, Flag, Bell, Heart, UserCheck, Clock3, X, ChevronLeft, ChevronRight, Star, Trophy, Upload } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFonts, PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
 import { Caveat_400Regular } from '@expo-google-fonts/caveat';
 import * as SplashScreen from 'expo-splash-screen';
+import * as ImagePicker from 'expo-image-picker';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -25,62 +27,18 @@ import Animated, {
   withRepeat,
   withTiming,
   interpolate,
+  useAnimatedScrollHandler,
+  runOnJS,
 } from 'react-native-reanimated';
 import { mockUsers, mockPosts } from '../data/mockData';
 import { Post, User } from '../types';
 import FullScreenPostViewer from '../components/FullScreenPostViewer';
-import AchievementsSection from '../components/AchievementsSection';
+import BulletinBoardSection from '../components/BulletinBoardSection';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const imageSize = (width - 56) / 3;
-
-interface Notification {
-  id: string;
-  type: 'like' | 'client_request' | 'previous_host';
-  title: string;
-  message: string;
-  timestamp: string;
-  isRead: boolean;
-  avatar?: string;
-}
-
-interface Photo {
-  id: string;
-  uri: string;
-  caption?: string;
-}
-
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'like',
-    title: 'New Like',
-    message: 'Sarah Johnson liked your profile',
-    timestamp: '2 min ago',
-    isRead: false,
-    avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150'
-  },
-  {
-    id: '2',
-    type: 'client_request',
-    title: 'New Client Request',
-    message: 'Michael Chen wants to book a 1-hour chat session',
-    timestamp: '15 min ago',
-    isRead: false,
-    avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150'
-  },
-];
-
-const mockPhotos: { [userId: string]: Photo[] } = {
-  '1': [
-    { id: '1', uri: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Beautiful sunset' },
-    { id: '2', uri: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'City lights' },
-    { id: '3', uri: 'https://images.pexels.com/photos/1181271/pexels-photo-1181271.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Nature walk' },
-    { id: '4', uri: 'https://images.pexels.com/photos/1181276/pexels-photo-1181276.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Coffee time' },
-    { id: '5', uri: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Weekend vibes' },
-    { id: '6', uri: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=400', caption: 'Art gallery' },
-  ],
-};
+const HEADER_HEIGHT = 100;
+const PROFILE_IMAGE_SIZE = 120;
 
 interface ProfileScreenProps {
   route?: {
@@ -92,6 +50,7 @@ interface ProfileScreenProps {
 
 export default function ProfileScreen({ route }: ProfileScreenProps) {
   const router = useRouter();
+  const scrollViewRef = useRef<ScrollView>(null);
   const params = useLocalSearchParams<{ userId: string }>();
   
   const userId = route?.params?.userId || params?.userId || '1';
@@ -107,15 +66,15 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
     mockPosts.filter(post => post.user.id === actualUserId)
   );
   const [isFollowing, setIsFollowing] = useState(user.isFollowing || false);
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const unreadCount = notifications.filter(n => !n.isRead).length;
   const [showFullScreenPost, setShowFullScreenPost] = useState(false);
   const [selectedPostIndex, setSelectedPostIndex] = useState(0);
+  const [coverImage, setCoverImage] = useState('https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=800');
 
   // Animation values
-  const notificationBounce = useSharedValue(0);
+  const scrollY = useSharedValue(0);
   const profileGlow = useSharedValue(0);
+  const buttonPulse = useSharedValue(0);
+  const coverFade = useSharedValue(1);
 
   // Font loading
   const [fontsLoaded] = useFonts({
@@ -130,24 +89,24 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
   }, [fontsLoaded]);
 
   React.useEffect(() => {
-    if (unreadCount > 0) {
-      notificationBounce.value = withRepeat(
-        withSpring(1, { damping: 8, stiffness: 200 }),
-        -1,
-        true
-      );
-    } else {
-      notificationBounce.value = withTiming(0);
-    }
-  }, [unreadCount]);
-
-  React.useEffect(() => {
     profileGlow.value = withRepeat(
       withTiming(1, { duration: 3000 }),
       -1,
       true
     );
+    
+    buttonPulse.value = withRepeat(
+      withTiming(1, { duration: 2000 }),
+      -1,
+      true
+    );
   }, []);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
 
   const handleUserPress = (userId: string) => {
     if (userId === '1') {
@@ -170,88 +129,32 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
     });
   };
 
-  const handleBookChat = () => {
-    Alert.alert(
-      'Book 1-Hour Chat',
-      `Book a private conversation session with ${user.username} for $${user.hourlyRate}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Book Now', 
-          onPress: () => Alert.alert('Success!', 'Chat session booked successfully. You will receive a confirmation shortly.') 
-        }
-      ]
-    );
-  };
-
   const handleFollow = () => {
     setIsFollowing(!isFollowing);
     setUser(prev => ({ ...prev, isFollowing: !isFollowing }));
-    Alert.alert(
-      isFollowing ? 'Unfollowed' : 'Following',
-      `You are now ${isFollowing ? 'not following' : 'following'} ${user.username}`
-    );
-  };
-
-  const handleBlock = () => {
-    Alert.alert(
-      'Block User',
-      `Are you sure you want to block ${user.username}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Block', style: 'destructive', onPress: () => Alert.alert('Blocked', `${user.username} has been blocked`) }
-      ]
-    );
   };
 
   const handleEditProfile = () => {
     Alert.alert('Edit Profile', 'Profile editing functionality would open here');
   };
 
-  const handleSettings = () => {
-    Alert.alert('Settings', 'Profile settings would open here');
-  };
-
   const handleMessages = () => {
     router.push('/messages');
   };
 
-  const handleReportUser = () => {
-    Alert.alert(
-      'Report User',
-      `Report ${user.username} for inappropriate behavior?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Report', 
-          style: 'destructive',
-          onPress: () => Alert.alert('Reported', `Thank you for reporting ${user.username}. We will review this report.`) 
-        }
-      ]
-    );
-  };
+  const handleUploadCover = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 1,
+    });
 
-  const handleNotifications = () => {
-    setShowNotifications(!showNotifications);
-    if (!showNotifications) {
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-    }
-  };
-
-  const handleHomeNavigation = () => {
-    router.push('/(tabs)');
-  };
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'like':
-        return <Heart size={16} color="#ff6b9d" fill="#ff6b9d" />;
-      case 'client_request':
-        return <UserCheck size={16} color="#10b981" />;
-      case 'previous_host':
-        return <MessageCircle size={16} color="#c77dff" />;
-      default:
-        return <Bell size={16} color="#c77dff" />;
+    if (!result.canceled) {
+      coverFade.value = withTiming(0, { duration: 200 }, () => {
+        runOnJS(setCoverImage)(result.assets[0].uri);
+        coverFade.value = withTiming(1, { duration: 500 });
+      });
     }
   };
 
@@ -259,10 +162,6 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
     const postIndex = userPosts.findIndex(p => p.id === post.id);
     setSelectedPostIndex(postIndex);
     setShowFullScreenPost(true);
-  };
-
-  const handleCloseFullScreen = () => {
-    setShowFullScreenPost(false);
   };
 
   const handleLike = (postId: string) => {
@@ -283,30 +182,75 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
     Alert.alert('Comment', 'Comment functionality would be implemented here');
   };
 
-  const handleNavigateToFeed = () => {
-    router.push('/(tabs)');
-  };
-
-  const handleNavigateToTrending = () => {
-    router.push('/(tabs)/trending');
-  };
-
-  const handleRegisterAsHost = () => {
-    router.push('/host-registration');
-  };
-
-  const notificationAnimatedStyle = useAnimatedStyle(() => {
+  // Animated styles
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [0, 100, 200],
+      [0, 0.5, 1],
+      'clamp'
+    );
+    
     return {
-      transform: [
-        { scale: interpolate(notificationBounce.value, [0, 1], [1, 1.1]) }
-      ],
+      opacity,
     };
   });
 
-  const profileGlowStyle = useAnimatedStyle(() => {
+  const profileImageAnimatedStyle = useAnimatedStyle(() => {
+    const scale = interpolate(
+      scrollY.value,
+      [0, 150, 300],
+      [1, 0.8, 0.6],
+      'clamp'
+    );
+    
+    const translateY = interpolate(
+      scrollY.value,
+      [0, 150, 300],
+      [0, -20, -40],
+      'clamp'
+    );
+    
     return {
+      transform: [{ scale }, { translateY }],
       shadowOpacity: interpolate(profileGlow.value, [0, 1], [0.4, 0.8]),
-      shadowRadius: interpolate(profileGlow.value, [0, 1], [10, 20]),
+      shadowRadius: interpolate(profileGlow.value, [0, 1], [15, 25]),
+    };
+  });
+
+  const buttonAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: interpolate(buttonPulse.value, [0, 1], [1, 1.02]) }
+      ],
+      shadowOpacity: interpolate(buttonPulse.value, [0, 1], [0.3, 0.6]),
+    };
+  });
+
+  const coverAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: coverFade.value,
+    };
+  });
+
+  const miniHeaderStyle = useAnimatedStyle(() => {
+    const translateY = interpolate(
+      scrollY.value,
+      [200, 250],
+      [50, 0],
+      'clamp'
+    );
+    
+    const opacity = interpolate(
+      scrollY.value,
+      [200, 250],
+      [0, 1],
+      'clamp'
+    );
+    
+    return {
+      transform: [{ translateY }],
+      opacity,
     };
   });
 
@@ -328,12 +272,6 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
         </LinearGradient>
       )}
       
-      {item.isTrending && (
-        <View style={styles.trendingIndicator}>
-          <Text style={styles.trendingText}>🔥</Text>
-        </View>
-      )}
-      
       <View style={styles.likeCountOverlay}>
         <Heart size={12} color="#FFFFFF" fill="#FFFFFF" />
         <Text style={styles.likeCountText}>{item.likes}</Text>
@@ -345,7 +283,7 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
-        size={12}
+        size={14}
         color={index < Math.floor(rating) ? '#FFD700' : '#666'}
         fill={index < Math.floor(rating) ? '#FFD700' : 'transparent'}
       />
@@ -357,72 +295,101 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      {/* Cosmic Background */}
       <LinearGradient
-        colors={['#2A1A55', '#1E0D36', '#0F0518', '#2A1A55']}
+        colors={['#1a0033', '#2d1b69', '#16213e', '#0f0518']}
         style={styles.background}
       >
-        {/* Modern Header */}
-        <View style={styles.modernHeader}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <View style={styles.glassmorphButton}>
-              <ArrowLeft size={20} color="#FFFFFF" />
-            </View>
-          </TouchableOpacity>
-          
-          <View style={styles.headerIcons}>
-            {isCurrentUser && (
-              <Animated.View style={[styles.headerIcon, notificationAnimatedStyle]}>
-                <TouchableOpacity onPress={handleNotifications}>
-                  <View style={styles.glassmorphButton}>
-                    <Bell size={20} color="#FFFFFF" />
-                    {unreadCount > 0 && (
-                      <View style={styles.notificationBadge}>
-                        <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
-                      </View>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            )}
-            
-            <TouchableOpacity onPress={handleMessages} style={styles.headerIcon}>
-              <View style={styles.glassmorphButton}>
-                <MessageCircle size={20} color="#FFFFFF" />
-              </View>
-            </TouchableOpacity>
-          </View>
+        {/* Star Pattern Overlay */}
+        <View style={styles.starPattern}>
+          {[...Array(50)].map((_, i) => (
+            <View
+              key={i}
+              style={[
+                styles.star,
+                {
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  opacity: Math.random() * 0.8 + 0.2,
+                }
+              ]}
+            />
+          ))}
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Profile Header with Gradient Background */}
-          <View style={styles.profileHeaderSection}>
-            <LinearGradient
-              colors={['rgba(162, 89, 255, 0.3)', 'rgba(162, 89, 255, 0.1)', 'transparent']}
-              style={styles.profileGradientBg}
-            />
-            
-            {/* Centered Profile Image */}
-            <View style={styles.centeredProfileContainer}>
-              <Animated.View style={[styles.profileImageWrapper, profileGlowStyle]}>
+        {/* Sticky Mini Header */}
+        <Animated.View style={[styles.stickyHeader, headerAnimatedStyle, miniHeaderStyle]}>
+          <BlurView intensity={80} style={styles.blurHeader}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <ArrowLeft size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.miniHeaderTitle}>{user.username}</Text>
+            <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.headerIcon}>
+                <Bell size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleMessages} style={styles.headerIcon}>
+                <MessageCircle size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+        </Animated.View>
+
+        <Animated.ScrollView
+          ref={scrollViewRef}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
+        >
+          {/* Cover Image */}
+          <View style={styles.coverContainer}>
+            <Animated.View style={coverAnimatedStyle}>
+              <ImageBackground
+                source={{ uri: coverImage }}
+                style={styles.coverImage}
+                blurRadius={2}
+              >
+                <LinearGradient
+                  colors={['transparent', 'rgba(0, 0, 0, 0.6)']}
+                  style={styles.coverGradient}
+                />
+                {isCurrentUser && (
+                  <TouchableOpacity
+                    style={styles.coverEditButton}
+                    onPress={handleUploadCover}
+                  >
+                    <BlurView intensity={60} style={styles.coverEditBlur}>
+                      <Camera size={16} color="#FFFFFF" />
+                    </BlurView>
+                  </TouchableOpacity>
+                )}
+              </ImageBackground>
+            </Animated.View>
+          </View>
+
+          {/* Profile Section */}
+          <View style={styles.profileSection}>
+            {/* Profile Image */}
+            <Animated.View style={[styles.profileImageContainer, profileImageAnimatedStyle]}>
+              <View style={styles.profileImageWrapper}>
                 <Image source={{ uri: user.avatar }} style={styles.profileImage} />
                 {user.isHost && (
                   <View style={styles.crownBadge}>
                     <Crown size={16} color="#FFD700" fill="#FFD700" />
                   </View>
                 )}
-              </Animated.View>
-            </View>
+              </View>
+            </Animated.View>
 
-            {/* User Info Centered */}
-            <View style={styles.centeredUserInfo}>
+            {/* User Info */}
+            <View style={styles.userInfo}>
               <Text style={styles.username}>{user.username}</Text>
               
-              <View style={styles.locationAgeContainer}>
-                <View style={styles.locationContainer}>
-                  <MapPin size={14} color="#888888" />
-                  <Text style={styles.locationText}>{user.location}</Text>
-                </View>
+              <View style={styles.locationContainer}>
+                <MapPin size={14} color="#B794F6" />
+                <Text style={styles.locationText}>{user.location}</Text>
                 <Text style={styles.ageText}>• {user.age} years old</Text>
               </View>
               
@@ -432,20 +399,20 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
             {/* Stats Row */}
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{userPosts.length}</Text>
+                <Text style={[styles.statNumber, { color: '#FF6B9D' }]}>{userPosts.length}</Text>
                 <Text style={styles.statLabel}>Posts</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>17.8K</Text>
+                <Text style={[styles.statNumber, { color: '#4ECDC4' }]}>17.8K</Text>
                 <Text style={styles.statLabel}>Followers</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>856</Text>
+                <Text style={[styles.statNumber, { color: '#FFE66D' }]}>856</Text>
                 <Text style={styles.statLabel}>Following</Text>
               </View>
             </View>
 
-            {/* Rating */}
+            {/* Rating Section */}
             {user.isHost && (
               <View style={styles.ratingSection}>
                 <View style={styles.starsContainer}>
@@ -459,82 +426,90 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
             {/* Action Buttons */}
             <View style={styles.actionButtons}>
               {isCurrentUser ? (
-                <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
-                  <LinearGradient
-                    colors={['#A259FF', '#7A4AE6']}
-                    style={styles.editProfileGradient}
-                  >
-                    <Edit3 size={16} color="#FFFFFF" />
-                    <Text style={styles.editProfileText}>Edit Profile</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+                <Animated.View style={[styles.editButton, buttonAnimatedStyle]}>
+                  <TouchableOpacity onPress={handleEditProfile}>
+                    <LinearGradient
+                      colors={['#9B61E5', '#7C3AED', '#6D28D9']}
+                      style={styles.editButtonGradient}
+                    >
+                      <Edit3 size={16} color="#FFFFFF" />
+                      <Text style={styles.editButtonText}>Edit Profile</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </Animated.View>
               ) : (
                 <View style={styles.socialButtons}>
                   <TouchableOpacity 
                     style={[styles.followButton, isFollowing && styles.followingButton]} 
                     onPress={handleFollow}
                   >
-                    {isFollowing ? (
-                      <UserMinus size={16} color="#ffffff" />
-                    ) : (
-                      <UserPlus size={16} color="#A259FF" />
-                    )}
-                    <Text style={[styles.followButtonText, isFollowing && styles.followingButtonText]}>
-                      {isFollowing ? 'Unfollow' : 'Follow'}
-                    </Text>
+                    <LinearGradient
+                      colors={isFollowing ? ['#4ECDC4', '#44B8B5'] : ['#9B61E5', '#7C3AED']}
+                      style={styles.followButtonGradient}
+                    >
+                      {isFollowing ? (
+                        <UserCheck size={16} color="#FFFFFF" />
+                      ) : (
+                        <UserPlus size={16} color="#FFFFFF" />
+                      )}
+                      <Text style={styles.followButtonText}>
+                        {isFollowing ? 'Following' : 'Follow'}
+                      </Text>
+                    </LinearGradient>
                   </TouchableOpacity>
                   
                   <TouchableOpacity style={styles.messageButton} onPress={handleMessages}>
-                    <MessageCircle size={16} color="#A259FF" />
-                    <Text style={styles.messageButtonText}>Message</Text>
+                    <BlurView intensity={60} style={styles.messageButtonBlur}>
+                      <MessageCircle size={16} color="#FFFFFF" />
+                      <Text style={styles.messageButtonText}>Message</Text>
+                    </BlurView>
                   </TouchableOpacity>
                 </View>
               )}
             </View>
           </View>
 
-          {/* Achievements Section - Only for current user */}
-          {isCurrentUser && (
-            <AchievementsSection />
-          )}
+          {/* Bulletin Board Section */}
+          <BulletinBoardSection isCurrentUser={isCurrentUser} />
 
-          {/* Posts Grid Header */}
-          <View style={styles.postsHeader}>
-            <Grid size={20} color="#FFFFFF" />
-            <Text style={styles.postsHeaderText}>Posts</Text>
-          </View>
-
-          {/* Posts Grid */}
-          {userPosts.length > 0 ? (
-            <FlatList
-              data={userPosts}
-              renderItem={renderPost}
-              numColumns={3}
-              scrollEnabled={false}
-              contentContainerStyle={styles.postsGrid}
-              columnWrapperStyle={styles.row}
-            />
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No posts yet</Text>
-              <Text style={styles.emptySubtext}>
-                {isCurrentUser ? 'Share your first story!' : `${user.username} hasn't posted yet`}
-              </Text>
+          {/* Posts Section */}
+          <View style={styles.postsSection}>
+            <View style={styles.postsHeader}>
+              <Grid size={20} color="#FFFFFF" />
+              <Text style={styles.postsHeaderText}>Posts</Text>
             </View>
-          )}
-        </ScrollView>
+
+            {userPosts.length > 0 ? (
+              <FlatList
+                data={userPosts}
+                renderItem={renderPost}
+                numColumns={3}
+                scrollEnabled={false}
+                contentContainerStyle={styles.postsGrid}
+                columnWrapperStyle={styles.row}
+              />
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>No posts yet</Text>
+                <Text style={styles.emptySubtext}>
+                  {isCurrentUser ? 'Share your first story!' : `${user.username} hasn't posted yet`}
+                </Text>
+              </View>
+            )}
+          </View>
+        </Animated.ScrollView>
 
         {/* Full Screen Post Viewer */}
         <FullScreenPostViewer
           visible={showFullScreenPost}
           posts={userPosts}
           initialIndex={selectedPostIndex}
-          onClose={handleCloseFullScreen}
+          onClose={() => setShowFullScreenPost(false)}
           onLike={handleLike}
           onComment={handleComment}
         />
       </LinearGradient>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -545,89 +520,109 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
   },
-  modernHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
-    zIndex: 10,
-  },
-  backButton: {
+  starPattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: 1,
   },
-  glassmorphButton: {
-    padding: 12,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    position: 'relative',
+  star: {
+    position: 'absolute',
+    width: 2,
+    height: 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 1,
   },
-  headerIcons: {
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: HEADER_HEIGHT,
+    zIndex: 100,
+  },
+  blurHeader: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 40,
+  },
+  backButton: {
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+  },
+  miniHeaderTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  headerRight: {
+    flexDirection: 'row',
     gap: 12,
   },
   headerIcon: {
-    position: 'relative',
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
   },
-  notificationBadge: {
+  scrollView: {
+    flex: 1,
+    zIndex: 10,
+  },
+  coverContainer: {
+    height: 200,
+    marginBottom: -60,
+  },
+  coverImage: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  coverGradient: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    backgroundColor: '#A259FF',
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
   },
-  notificationBadgeText: {
-    fontSize: 10,
-    color: '#FFFFFF',
-    fontWeight: '600',
+  coverEditButton: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
   },
-  profileHeaderSection: {
+  coverEditBlur: {
+    padding: 12,
+  },
+  profileSection: {
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 30,
-    position: 'relative',
+    zIndex: 20,
   },
-  profileGradientBg: {
-    position: 'absolute',
-    top: -50,
-    left: 0,
-    right: 0,
-    height: 200,
-    zIndex: -1,
-  },
-  centeredProfileContainer: {
-    alignItems: 'center',
+  profileImageContainer: {
     marginBottom: 20,
-  },
-  profileImageWrapper: {
-    shadowColor: '#A259FF',
+    shadowColor: '#9B61E5',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
-    shadowRadius: 15,
+    shadowRadius: 20,
     elevation: 10,
   },
+  profileImageWrapper: {
+    position: 'relative',
+  },
   profileImage: {
-    width: 120,
-    height: 120,
+    width: PROFILE_IMAGE_SIZE,
+    height: PROFILE_IMAGE_SIZE,
     borderRadius: 60,
-    borderWidth: 3,
-    borderColor: '#A259FF',
+    borderWidth: 4,
+    borderColor: '#9B61E5',
   },
   crownBadge: {
     position: 'absolute',
@@ -642,38 +637,37 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFD700',
   },
-  centeredUserInfo: {
+  userInfo: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 24,
   },
   username: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 8,
-  },
-  locationAgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 12,
   },
   locationText: {
     fontSize: 14,
-    color: '#888888',
+    color: '#B794F6',
     marginLeft: 4,
   },
   ageText: {
     fontSize: 14,
-    color: '#888888',
+    color: '#B794F6',
     marginLeft: 8,
   },
   bio: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#E2E8F0',
     textAlign: 'center',
     lineHeight: 22,
     opacity: 0.9,
@@ -682,24 +676,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   statItem: {
     alignItems: 'center',
   },
   statNumber: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
   },
   statLabel: {
     fontSize: 14,
-    color: '#888888',
+    color: '#A0AEC0',
     marginTop: 2,
   },
   ratingSection: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   starsContainer: {
     flexDirection: 'row',
@@ -714,27 +707,33 @@ const styles = StyleSheet.create({
   },
   ratingLabel: {
     fontSize: 12,
-    color: '#888888',
+    color: '#A0AEC0',
+    fontWeight: '400',
   },
   actionButtons: {
     width: '100%',
   },
-  editProfileButton: {
-    borderRadius: 12,
+  editButton: {
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#9B61E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  editProfileGradient: {
+  editButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
+    gap: 8,
   },
-  editProfileText: {
+  editButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
-    marginLeft: 8,
   },
   socialButtons: {
     flexDirection: 'row',
@@ -742,49 +741,49 @@ const styles = StyleSheet.create({
   },
   followButton: {
     flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  followingButton: {
+    opacity: 0.8,
+  },
+  followButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: '#A259FF',
-    borderRadius: 12,
     paddingVertical: 14,
-  },
-  followingButton: {
-    backgroundColor: '#A259FF',
+    gap: 8,
   },
   followButtonText: {
-    color: '#A259FF',
-    fontWeight: '600',
-    marginLeft: 8,
-    fontSize: 16,
-  },
-  followingButtonText: {
     color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
   messageButton: {
     flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  messageButtonBlur: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: '#A259FF',
-    borderRadius: 12,
     paddingVertical: 14,
+    gap: 8,
   },
   messageButtonText: {
-    color: '#A259FF',
+    color: '#FFFFFF',
     fontWeight: '600',
-    marginLeft: 8,
     fontSize: 16,
+  },
+  postsSection: {
+    marginTop: 20,
+    paddingHorizontal: 20,
   },
   postsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
     marginBottom: 20,
   },
   postsHeaderText: {
@@ -794,26 +793,25 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   postsGrid: {
-    paddingHorizontal: 20,
     paddingBottom: 20,
   },
   row: {
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   gridItem: {
     width: imageSize,
     height: imageSize,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(155, 97, 229, 0.2)',
   },
   gridImage: {
     width: '100%',
@@ -832,21 +830,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
   },
-  trendingIndicator: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 8,
-    padding: 2,
-  },
-  trendingText: {
-    fontSize: 12,
-  },
   likeCountOverlay: {
     position: 'absolute',
-    bottom: 4,
-    right: 4,
+    bottom: 6,
+    right: 6,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -874,7 +861,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#888888',
+    color: '#A0AEC0',
     textAlign: 'center',
   },
 });
