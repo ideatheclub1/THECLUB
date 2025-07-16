@@ -18,6 +18,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { mockUsers, mockPosts } from '../data/mockData';
 import { Post, User } from '../types';
 import FullScreenPostViewer from '../components/FullScreenPostViewer';
+import AchievementsSection from '../components/AchievementsSection';
 
 const { width } = Dimensions.get('window');
 const imageSize = (width - 48) / 3; // 3 columns with padding
@@ -555,6 +556,11 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
             <Grid size={20} color="#e0aaff" />
             <Text style={styles.postsHeaderText}>Posts</Text>
           </View>
+
+          {/* Achievements Section - Only for current user */}
+          {isCurrentUser && (
+            <AchievementsSection />
+          )}
 
           {/* Posts Grid */}
           {userPosts.length > 0 ? (
