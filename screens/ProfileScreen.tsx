@@ -15,13 +15,21 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Share2, Settings, Grid2x2 as Grid, Camera, UserPlus, UserMinus, MessageCircle, Crown, DollarSign, Shield, MapPin, Clock, CreditCard as Edit3, Chrome as Home, TrendingUp, ArrowRight, ArrowLeft, Flag, Bell, Heart, UserCheck, Clock3, X, ChevronLeft, ChevronRight, Star } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withRepeat,
+  withTiming,
+  interpolate,
+} from 'react-native-reanimated';
 import { mockUsers, mockPosts } from '../data/mockData';
 import { Post, User } from '../types';
 import FullScreenPostViewer from '../components/FullScreenPostViewer';
 import AchievementsSection from '../components/AchievementsSection';
 
 const { width } = Dimensions.get('window');
-const imageSize = (width - 48) / 3; // 3 columns with padding
+const imageSize = (width - 56) / 3; // 3 columns with more padding
 
 interface Notification {
   id: string;
@@ -161,6 +169,29 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
   const [showFullScreenPost, setShowFullScreenPost] = useState(false);
   const [selectedPostIndex, setSelectedPostIndex] = useState(0);
 
+  // Animation values
+  const notificationBounce = useSharedValue(0);
+  const profileGlow = useSharedValue(0);
+
+  React.useEffect(() => {
+    if (unreadCount > 0) {
+      notificationBounce.value = withRepeat(
+        withSpring(1, { damping: 8, stiffness: 200 }),
+        -1,
+        true
+      );
+    } else {
+      notificationBounce.value = withTiming(0);
+    }
+  }, [unreadCount]);
+
+  React.useEffect(() => {
+    profileGlow.value = withRepeat(
+      withTiming(1, { duration: 3000 }),
+      -1,
+      true
+    );
+  }, []);
   const handleUserPress = (userId: string) => {
     if (userId === '1') {
       Alert.alert(
@@ -308,9 +339,23 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
     router.push('/host-registration');
   };
 
+  const notificationAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: interpolate(notificationBounce.value, [0, 1], [1, 1.1]) }
+      ],
+    };
+  });
+
+  const profileGlowStyle = useAnimatedStyle(() => {
+    return {
+      shadowOpacity: interpolate(profileGlow.value, [0, 1], [0.3, 0.7]),
+      shadowRadius: interpolate(profileGlow.value, [0, 1], [8, 16]),
+    };
+  });
   const renderPost = ({ item, index }: { item: Post; index: number }) => (
     <TouchableOpacity
-      style={[styles.gridItem, { marginRight: (index + 1) % 3 === 0 ? 0 : 8 }]}
+      style={[styles.gridItem, { marginRight: (index + 1) % 3 === 0 ? 0 : 4 }]}
       onPress={() => handlePostPress(item)}
     >
       {item.image ? (
@@ -331,6 +376,12 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
           <Text style={styles.trendingText}>🔥</Text>
         </View>
       )}
+      
+      {/* Like count overlay */}
+      <View style={styles.likeCountOverlay}>
+        <Heart size={12} color="#FFFFFF" fill="#FFFFFF" />
+        <Text style={styles.likeCountText}>{item.likes}</Text>
+      </View>
     </TouchableOpacity>
   );
 
@@ -366,7 +417,8 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
               </TouchableOpacity>
             )}
             {isCurrentUser && (
-              <TouchableOpacity onPress={handleNotifications} style={styles.headerIcon}>
+              <Animated.View style={notificationAnimatedStyle}>
+                <TouchableOpacity onPress={handleNotifications} style={styles.headerIcon}>
                 <Bell size={20} color="#c77dff" />
                 {unreadCount > 0 && (
                   <View style={styles.notificationBadge}>
@@ -374,6 +426,7 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
                   </View>
                 )}
               </TouchableOpacity>
+              </Animated.View>
             )}
             <TouchableOpacity onPress={handleMessages} style={styles.messagesButton}>
               <MessageCircle size={20} color="#c77dff" />
@@ -432,12 +485,14 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
             {/* Profile Image and Stats */}
             <View style={styles.profileHeader}>
               <View style={styles.profileImageContainer}>
+                <Animated.View style={[styles.profileImageWrapper, profileGlowStyle]}>
                 <Image source={{ uri: user.avatar }} style={styles.profileImage} />
                 {user.isHost && (
                   <View style={styles.hostBadge}>
                     <Crown size={12} color="#ffd700" />
                   </View>
                 )}
+                </Animated.View>
               </View>
               
               {/* Profile Stats */}
@@ -497,6 +552,10 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
                       <DollarSign size={14} color="#000000" />
                       <Text style={styles.priceText}>{user.hourlyRate}/hr</Text>
                     </View>
+                    <View style={styles.ratingInfo}>
+                      <Text style={styles.ratingText}>4.8</Text>
+                      <Text style={styles.ratingLabel}>Rating</Text>
+                    </View>
                   </LinearGradient>
                 </TouchableOpacity>
 
@@ -517,8 +576,13 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
               {isCurrentUser ? (
                 // Current user: Show Edit Profile only
                 <TouchableOpacity style={styles.editProfileButton} onPress={handleEditProfile}>
+                  <LinearGradient
+                    colors={['#A259FF', '#8B3DFF']}
+                    style={styles.editProfileGradient}
+                  >
                   <Edit3 size={16} color="#e0aaff" />
                   <Text style={styles.editProfileText}>Edit Profile</Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               ) : (
                 // Other users: Show Follow/Message/Block
@@ -735,21 +799,32 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     paddingHorizontal: 16,
+    marginBottom: 24,
     marginBottom: 30,
   },
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 24,
     marginBottom: 16,
   },
   profileImageContainer: {
     position: 'relative',
     marginRight: 20,
   },
+  profileImageWrapper: {
+    shadowColor: '#A259FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
+  },
   profileImage: {
     width: 90,
     height: 90,
     borderRadius: 45,
+    borderWidth: 2,
+    borderColor: '#A259FF',
     borderWidth: 3,
     borderColor: '#9B61E5',
   },
@@ -776,41 +851,59 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 18,
+    fontWeight: '700',
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   statLabel: {
     fontSize: 13,
     color: '#A0A0A0',
+    fontWeight: '400',
     marginTop: 2,
   },
   userDetailsSection: {
+    marginBottom: 24,
     marginBottom: 20,
   },
   nameRatingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 12,
     marginBottom: 8,
   },
   username: {
     fontSize: 16,
+    fontWeight: '700',
     fontWeight: '600',
     color: '#FFFFFF',
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingInfo: {
+    alignItems: 'center',
   },
   ratingText: {
     fontSize: 14,
+    fontWeight: '700',
     color: '#FFD700',
-    marginLeft: 4,
-    fontWeight: '600',
+  },
+  ratingLabel: {
+    fontSize: 10,
+    color: '#A0A0A0',
+    fontWeight: '400',
   },
   locationAgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 12,
     marginBottom: 8,
   },
   locationContainer: {
@@ -819,11 +912,13 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 14,
+    color: '#888888',
     color: '#A0A0A0',
     marginLeft: 4,
   },
   ageText: {
     fontSize: 14,
+    color: '#888888',
     color: '#A0A0A0',
     marginLeft: 8,
   },
@@ -831,6 +926,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FFFFFF',
     lineHeight: 18,
+    fontWeight: '400',
   },
   availableChatSection: {
     marginBottom: 20,
@@ -901,17 +997,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   editProfileButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  editProfileGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#121212',
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-    borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
   },
   editProfileText: {
-    color: '#9B61E5',
+    color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
     marginLeft: 8,
@@ -997,7 +1094,7 @@ const styles = StyleSheet.create({
   },
   row: {
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   gridItem: {
     width: imageSize,
@@ -1005,6 +1102,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   gridImage: {
     width: '100%',
@@ -1034,6 +1138,23 @@ const styles = StyleSheet.create({
   },
   trendingText: {
     fontSize: 12,
+  },
+  likeCountOverlay: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    gap: 2,
+  },
+  likeCountText: {
+    fontSize: 10,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   emptyState: {
     width: '100%',
