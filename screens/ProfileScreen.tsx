@@ -16,9 +16,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Share2, Settings, Grid2x2 as Grid, Camera, UserPlus, UserMinus, MessageCircle, Crown, DollarSign, Shield, MapPin, Clock, CreditCard as Edit3, Chrome as Home, TrendingUp, ArrowRight, ArrowLeft, Flag, Bell, Heart, UserCheck, Clock3, X, ChevronLeft, ChevronRight, Star, Trophy, Upload } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useFonts, PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
-import { Caveat_400Regular } from '@expo-google-fonts/caveat';
-import * as SplashScreen from 'expo-splash-screen';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, {
   useSharedValue,
@@ -55,7 +52,7 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
   
   const userId = route?.params?.userId || params?.userId || '1';
   const actualUserId = userId === 'me' ? '1' : userId;
-  const isCurrentUser = userId === '1';
+  const isCurrentUser = actualUserId === '1';
   
   const [user, setUser] = useState<User>(() => {
     const foundUser = mockUsers.find(u => u.id === actualUserId);
@@ -75,59 +72,41 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
   const profileGlow = useSharedValue(0);
   const buttonPulse = useSharedValue(0);
   const coverFade = useSharedValue(1);
-
-  // Font loading
-  const [fontsLoaded] = useFonts({
-    PatrickHand_400Regular,
-    Caveat_400Regular,
-  });
+  const notificationBounce = useSharedValue(0);
 
   React.useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
+    // Subtle glow animation for premium users
+    if (user.isHost) {
+      profileGlow.value = withRepeat(
+        withTiming(1, { duration: 4000 }),
+        -1,
+        true
+      );
     }
-  }, [fontsLoaded]);
-
-  React.useEffect(() => {
-    profileGlow.value = withRepeat(
+    
+    // Subtle button pulse
+    buttonPulse.value = withRepeat(
       withTiming(1, { duration: 3000 }),
       -1,
       true
     );
-    
-    buttonPulse.value = withRepeat(
-      withTiming(1, { duration: 2000 }),
-      -1,
-      true
-    );
-  }, []);
+
+    // Notification bounce when there are unread notifications
+    const unreadCount = 2; // Mock unread count
+    if (unreadCount > 0) {
+      notificationBounce.value = withRepeat(
+        withSpring(1, { damping: 8 }),
+        -1,
+        true
+      );
+    }
+  }, [user.isHost]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = event.contentOffset.y;
     },
   });
-
-  const handleUserPress = (userId: string) => {
-    if (userId === '1') {
-      Alert.alert(
-        'Your Profile',
-        'You are viewing your own profile. To make changes, go to your settings.',
-        [
-          { text: 'OK', style: 'cancel' },
-          { 
-            text: 'Go to Profile', 
-            onPress: () => router.push('/(tabs)/profile')
-          }
-        ]
-      );
-      return;
-    }
-    router.push({
-      pathname: '/ProfileScreen',
-      params: { userId }
-    });
-  };
 
   const handleFollow = () => {
     setIsFollowing(!isFollowing);
@@ -151,9 +130,9 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
     });
 
     if (!result.canceled) {
-      coverFade.value = withTiming(0, { duration: 200 }, () => {
+      coverFade.value = withTiming(0, { duration: 300 }, () => {
         runOnJS(setCoverImage)(result.assets[0].uri);
-        coverFade.value = withTiming(1, { duration: 500 });
+        coverFade.value = withTiming(1, { duration: 600 });
       });
     }
   };
@@ -186,8 +165,8 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
   const headerAnimatedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
       scrollY.value,
-      [0, 100, 200],
-      [0, 0.5, 1],
+      [0, 150, 300],
+      [0, 0.7, 1],
       'clamp'
     );
     
@@ -199,31 +178,33 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
   const profileImageAnimatedStyle = useAnimatedStyle(() => {
     const scale = interpolate(
       scrollY.value,
-      [0, 150, 300],
-      [1, 0.8, 0.6],
+      [0, 200, 400],
+      [1, 0.75, 0.5],
       'clamp'
     );
     
     const translateY = interpolate(
       scrollY.value,
-      [0, 150, 300],
-      [0, -20, -40],
+      [0, 200, 400],
+      [0, -30, -60],
       'clamp'
     );
     
+    const glowOpacity = user.isHost ? interpolate(profileGlow.value, [0, 1], [0.3, 0.7]) : 0;
+    
     return {
       transform: [{ scale }, { translateY }],
-      shadowOpacity: interpolate(profileGlow.value, [0, 1], [0.4, 0.8]),
-      shadowRadius: interpolate(profileGlow.value, [0, 1], [15, 25]),
+      shadowOpacity: glowOpacity,
+      shadowRadius: interpolate(profileGlow.value, [0, 1], [10, 20]),
     };
   });
 
   const buttonAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
-        { scale: interpolate(buttonPulse.value, [0, 1], [1, 1.02]) }
+        { scale: interpolate(buttonPulse.value, [0, 1], [1, 1.01]) }
       ],
-      shadowOpacity: interpolate(buttonPulse.value, [0, 1], [0.3, 0.6]),
+      shadowOpacity: interpolate(buttonPulse.value, [0, 1], [0.2, 0.4]),
     };
   });
 
@@ -236,14 +217,14 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
   const miniHeaderStyle = useAnimatedStyle(() => {
     const translateY = interpolate(
       scrollY.value,
-      [200, 250],
+      [250, 300],
       [50, 0],
       'clamp'
     );
     
     const opacity = interpolate(
       scrollY.value,
-      [200, 250],
+      [250, 300],
       [0, 1],
       'clamp'
     );
@@ -254,16 +235,24 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
     };
   });
 
+  const notificationAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: interpolate(notificationBounce.value, [0, 1], [1, 1.1]) }
+      ],
+    };
+  });
+
   const renderPost = ({ item, index }: { item: Post; index: number }) => (
     <TouchableOpacity
-      style={[styles.gridItem, { marginRight: (index + 1) % 3 === 0 ? 0 : 4 }]}
+      style={[styles.gridItem, { marginRight: (index + 1) % 3 === 0 ? 0 : 6 }]}
       onPress={() => handlePostPress(item)}
     >
       {item.image ? (
         <Image source={{ uri: item.image }} style={styles.gridImage} />
       ) : (
         <LinearGradient
-          colors={['rgba(139, 92, 246, 0.3)', 'rgba(139, 92, 246, 0.1)']}
+          colors={['rgba(99, 102, 241, 0.2)', 'rgba(139, 92, 246, 0.1)']}
           style={styles.gridPlaceholder}
         >
           <Text style={styles.gridPlaceholderText} numberOfLines={3}>
@@ -283,52 +272,54 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
-        size={14}
-        color={index < Math.floor(rating) ? '#FFD700' : '#666'}
-        fill={index < Math.floor(rating) ? '#FFD700' : 'transparent'}
+        size={16}
+        color={index < Math.floor(rating) ? '#D4AF37' : '#4A4A4A'}
+        fill={index < Math.floor(rating) ? '#D4AF37' : 'transparent'}
       />
     ));
   };
 
-  if (!fontsLoaded) {
-    return null;
-  }
-
   return (
     <View style={styles.container}>
-      {/* Cosmic Background */}
+      {/* Sophisticated Dark Background */}
       <LinearGradient
-        colors={['#1a0033', '#2d1b69', '#16213e', '#0f0518']}
+        colors={['#0a0a0a', '#1a0f2e', '#2d1b69', '#0a0a0a']}
         style={styles.background}
       >
-        {/* Star Pattern Overlay */}
-        <View style={styles.starPattern}>
-          {[...Array(50)].map((_, i) => (
+        {/* Subtle Nebula Stars */}
+        <View style={styles.nebulaPattern}>
+          {[...Array(30)].map((_, i) => (
             <View
               key={i}
               style={[
-                styles.star,
+                styles.nebulaStar,
                 {
                   left: `${Math.random() * 100}%`,
                   top: `${Math.random() * 100}%`,
-                  opacity: Math.random() * 0.8 + 0.2,
+                  opacity: Math.random() * 0.6 + 0.2,
+                  transform: [{ scale: Math.random() * 0.8 + 0.2 }],
                 }
               ]}
             />
           ))}
         </View>
 
-        {/* Sticky Mini Header */}
+        {/* Refined Sticky Mini Header */}
         <Animated.View style={[styles.stickyHeader, headerAnimatedStyle, miniHeaderStyle]}>
-          <BlurView intensity={80} style={styles.blurHeader}>
+          <BlurView intensity={40} style={styles.blurHeader}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ArrowLeft size={20} color="#FFFFFF" />
+              <ArrowLeft size={22} color="#FFFFFF" />
             </TouchableOpacity>
             <Text style={styles.miniHeaderTitle}>{user.username}</Text>
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.headerIcon}>
-                <Bell size={20} color="#FFFFFF" />
-              </TouchableOpacity>
+              <Animated.View style={notificationAnimatedStyle}>
+                <TouchableOpacity style={styles.headerIcon}>
+                  <Bell size={20} color="#FFFFFF" />
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationText}>2</Text>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
               <TouchableOpacity onPress={handleMessages} style={styles.headerIcon}>
                 <MessageCircle size={20} color="#FFFFFF" />
               </TouchableOpacity>
@@ -343,16 +334,16 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}
         >
-          {/* Cover Image */}
+          {/* Elegant Cover Section */}
           <View style={styles.coverContainer}>
             <Animated.View style={coverAnimatedStyle}>
               <ImageBackground
                 source={{ uri: coverImage }}
                 style={styles.coverImage}
-                blurRadius={2}
+                blurRadius={1}
               >
                 <LinearGradient
-                  colors={['transparent', 'rgba(0, 0, 0, 0.6)']}
+                  colors={['transparent', 'rgba(0, 0, 0, 0.8)']}
                   style={styles.coverGradient}
                 />
                 {isCurrentUser && (
@@ -360,8 +351,8 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
                     style={styles.coverEditButton}
                     onPress={handleUploadCover}
                   >
-                    <BlurView intensity={60} style={styles.coverEditBlur}>
-                      <Camera size={16} color="#FFFFFF" />
+                    <BlurView intensity={30} style={styles.coverEditBlur}>
+                      <Camera size={18} color="#FFFFFF" />
                     </BlurView>
                   </TouchableOpacity>
                 )}
@@ -369,70 +360,71 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
             </Animated.View>
           </View>
 
-          {/* Profile Section */}
+          {/* Refined Profile Section */}
           <View style={styles.profileSection}>
-            {/* Profile Image */}
+            {/* Premium Profile Image */}
             <Animated.View style={[styles.profileImageContainer, profileImageAnimatedStyle]}>
               <View style={styles.profileImageWrapper}>
                 <Image source={{ uri: user.avatar }} style={styles.profileImage} />
                 {user.isHost && (
                   <View style={styles.crownBadge}>
-                    <Crown size={16} color="#FFD700" fill="#FFD700" />
+                    <Crown size={18} color="#D4AF37" fill="#D4AF37" />
                   </View>
                 )}
+                {user.isHost && <View style={styles.premiumGlow} />}
               </View>
             </Animated.View>
 
-            {/* User Info */}
+            {/* Clean Typography */}
             <View style={styles.userInfo}>
               <Text style={styles.username}>{user.username}</Text>
               
               <View style={styles.locationContainer}>
-                <MapPin size={14} color="#B794F6" />
+                <MapPin size={16} color="#9CA3AF" />
                 <Text style={styles.locationText}>{user.location}</Text>
-                <Text style={styles.ageText}>• {user.age} years old</Text>
+                <Text style={styles.ageText}>• {user.age}</Text>
               </View>
               
               <Text style={styles.bio}>{user.bio}</Text>
             </View>
 
-            {/* Stats Row */}
+            {/* Refined Stats */}
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
-                <Text style={[styles.statNumber, { color: '#FF6B9D' }]}>{userPosts.length}</Text>
+                <Text style={[styles.statNumber, { color: '#D4AF37' }]}>{userPosts.length}</Text>
                 <Text style={styles.statLabel}>Posts</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statNumber, { color: '#4ECDC4' }]}>17.8K</Text>
+                <Text style={[styles.statNumber, { color: '#C0C0C0' }]}>17.8K</Text>
                 <Text style={styles.statLabel}>Followers</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statNumber, { color: '#FFE66D' }]}>856</Text>
+                <Text style={[styles.statNumber, { color: '#4B5563' }]}>856</Text>
                 <Text style={styles.statLabel}>Following</Text>
               </View>
             </View>
 
-            {/* Rating Section */}
+            {/* Sophisticated Rating */}
             {user.isHost && (
               <View style={styles.ratingSection}>
                 <View style={styles.starsContainer}>
                   {renderStars(4.8)}
+                  <Text style={styles.ratingNumber}>4.8</Text>
                 </View>
-                <Text style={styles.ratingNumber}>4.8</Text>
                 <Text style={styles.ratingLabel}>Rating</Text>
               </View>
             )}
 
-            {/* Action Buttons */}
+            {/* Elegant Action Buttons */}
             <View style={styles.actionButtons}>
               {isCurrentUser ? (
                 <Animated.View style={[styles.editButton, buttonAnimatedStyle]}>
                   <TouchableOpacity onPress={handleEditProfile}>
                     <LinearGradient
-                      colors={['#9B61E5', '#7C3AED', '#6D28D9']}
+                      colors={['#6366F1', '#8B5CF6', '#A855F7']}
                       style={styles.editButtonGradient}
                     >
-                      <Edit3 size={16} color="#FFFFFF" />
+                      <Edit3 size={18} color="#FFFFFF" />
                       <Text style={styles.editButtonText}>Edit Profile</Text>
                     </LinearGradient>
                   </TouchableOpacity>
@@ -444,13 +436,13 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
                     onPress={handleFollow}
                   >
                     <LinearGradient
-                      colors={isFollowing ? ['#4ECDC4', '#44B8B5'] : ['#9B61E5', '#7C3AED']}
+                      colors={isFollowing ? ['#6B7280', '#374151'] : ['#6366F1', '#8B5CF6']}
                       style={styles.followButtonGradient}
                     >
                       {isFollowing ? (
-                        <UserCheck size={16} color="#FFFFFF" />
+                        <UserCheck size={18} color="#FFFFFF" />
                       ) : (
-                        <UserPlus size={16} color="#FFFFFF" />
+                        <UserPlus size={18} color="#FFFFFF" />
                       )}
                       <Text style={styles.followButtonText}>
                         {isFollowing ? 'Following' : 'Follow'}
@@ -459,8 +451,8 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
                   </TouchableOpacity>
                   
                   <TouchableOpacity style={styles.messageButton} onPress={handleMessages}>
-                    <BlurView intensity={60} style={styles.messageButtonBlur}>
-                      <MessageCircle size={16} color="#FFFFFF" />
+                    <BlurView intensity={30} style={styles.messageButtonBlur}>
+                      <MessageCircle size={18} color="#FFFFFF" />
                       <Text style={styles.messageButtonText}>Message</Text>
                     </BlurView>
                   </TouchableOpacity>
@@ -469,13 +461,13 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
             </View>
           </View>
 
-          {/* Bulletin Board Section */}
+          {/* Mature Bulletin Board */}
           <BulletinBoardSection isCurrentUser={isCurrentUser} />
 
-          {/* Posts Section */}
+          {/* Sophisticated Posts Grid */}
           <View style={styles.postsSection}>
             <View style={styles.postsHeader}>
-              <Grid size={20} color="#FFFFFF" />
+              <Grid size={22} color="#FFFFFF" />
               <Text style={styles.postsHeaderText}>Posts</Text>
             </View>
 
@@ -492,7 +484,7 @@ export default function ProfileScreen({ route }: ProfileScreenProps) {
               <View style={styles.emptyState}>
                 <Text style={styles.emptyText}>No posts yet</Text>
                 <Text style={styles.emptySubtext}>
-                  {isCurrentUser ? 'Share your first story!' : `${user.username} hasn't posted yet`}
+                  {isCurrentUser ? 'Share your creative work' : `${user.username} hasn't posted yet`}
                 </Text>
               </View>
             )}
@@ -520,7 +512,7 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
   },
-  starPattern: {
+  nebulaPattern: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -528,12 +520,16 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 1,
   },
-  star: {
+  nebulaStar: {
     position: 'absolute',
-    width: 2,
-    height: 2,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 1,
+    width: 1,
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 0.5,
+    shadowColor: '#E5E7EB',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
   },
   stickyHeader: {
     position: 'absolute',
@@ -552,31 +548,52 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   backButton: {
-    padding: 8,
+    padding: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
+    borderRadius: 24,
   },
   miniHeaderTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
     color: '#FFFFFF',
+    fontFamily: 'Inter-SemiBold',
   },
   headerRight: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   headerIcon: {
-    padding: 8,
+    padding: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
+    borderRadius: 24,
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#000000',
+  },
+  notificationText: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
     zIndex: 10,
   },
   coverContainer: {
-    height: 200,
-    marginBottom: -60,
+    height: 220,
+    marginBottom: -70,
   },
   coverImage: {
     width: '100%',
@@ -588,31 +605,31 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 100,
+    height: 120,
   },
   coverEditButton: {
     position: 'absolute',
-    bottom: 16,
-    right: 16,
-    borderRadius: 20,
+    bottom: 20,
+    right: 20,
+    borderRadius: 24,
     overflow: 'hidden',
   },
   coverEditBlur: {
-    padding: 12,
+    padding: 14,
   },
   profileSection: {
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 30,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
     zIndex: 20,
   },
   profileImageContainer: {
-    marginBottom: 20,
-    shadowColor: '#9B61E5',
+    marginBottom: 24,
+    shadowColor: '#8B5CF6',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOpacity: 0.4,
+    shadowRadius: 15,
+    elevation: 8,
   },
   profileImageWrapper: {
     position: 'relative',
@@ -621,127 +638,146 @@ const styles = StyleSheet.create({
     width: PROFILE_IMAGE_SIZE,
     height: PROFILE_IMAGE_SIZE,
     borderRadius: 60,
-    borderWidth: 4,
-    borderColor: '#9B61E5',
+    borderWidth: 2,
+    borderColor: '#374151',
+  },
+  premiumGlow: {
+    position: 'absolute',
+    top: -2,
+    left: -2,
+    width: PROFILE_IMAGE_SIZE + 4,
+    height: PROFILE_IMAGE_SIZE + 4,
+    borderRadius: 62,
+    borderWidth: 2,
+    borderColor: '#8B5CF6',
+    opacity: 0.6,
   },
   crownBadge: {
     position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 20,
-    width: 36,
-    height: 36,
+    top: -10,
+    right: -10,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    borderRadius: 22,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#D4AF37',
   },
   userInfo: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   username: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    marginBottom: 12,
+    fontFamily: 'Inter-Bold',
+    letterSpacing: -0.5,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   locationText: {
-    fontSize: 14,
-    color: '#B794F6',
-    marginLeft: 4,
+    fontSize: 16,
+    color: '#9CA3AF',
+    marginLeft: 6,
+    fontFamily: 'Inter-Regular',
   },
   ageText: {
-    fontSize: 14,
-    color: '#B794F6',
-    marginLeft: 8,
+    fontSize: 16,
+    color: '#9CA3AF',
+    marginLeft: 12,
+    fontFamily: 'Inter-Regular',
   },
   bio: {
     fontSize: 16,
-    color: '#E2E8F0',
+    color: '#D1D5DB',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
     opacity: 0.9,
+    fontFamily: 'Inter-Regular',
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   statItem: {
     alignItems: 'center',
   },
   statNumber: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
   },
   statLabel: {
     fontSize: 14,
-    color: '#A0AEC0',
-    marginTop: 2,
+    color: '#6B7280',
+    marginTop: 4,
+    fontFamily: 'Inter-Regular',
+    fontWeight: '400',
   },
   ratingSection: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   starsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
+    gap: 4,
   },
   ratingNumber: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    marginBottom: 2,
+    fontWeight: '600',
+    color: '#D4AF37',
+    marginLeft: 12,
+    fontFamily: 'Inter-SemiBold',
   },
   ratingLabel: {
-    fontSize: 12,
-    color: '#A0AEC0',
-    fontWeight: '400',
+    fontSize: 13,
+    color: '#6B7280',
+    fontFamily: 'Inter-Regular',
   },
   actionButtons: {
     width: '100%',
   },
   editButton: {
-    borderRadius: 16,
+    borderRadius: 24,
     overflow: 'hidden',
-    shadowColor: '#9B61E5',
+    shadowColor: '#8B5CF6',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 6,
   },
   editButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 24,
-    gap: 8,
+    paddingHorizontal: 32,
+    gap: 10,
   },
   editButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
   },
   socialButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   followButton: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 24,
     overflow: 'hidden',
   },
   followingButton: {
@@ -751,67 +787,70 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    gap: 8,
+    paddingVertical: 16,
+    gap: 10,
   },
   followButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
   },
   messageButton: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 24,
     overflow: 'hidden',
   },
   messageButtonBlur: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    gap: 8,
+    paddingVertical: 16,
+    gap: 10,
   },
   messageButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
   },
   postsSection: {
-    marginTop: 20,
-    paddingHorizontal: 20,
+    marginTop: 32,
+    paddingHorizontal: 24,
   },
   postsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   postsHeaderText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
     color: '#FFFFFF',
-    marginLeft: 8,
+    marginLeft: 12,
+    fontFamily: 'Inter-SemiBold',
   },
   postsGrid: {
-    paddingBottom: 20,
+    paddingBottom: 32,
   },
   row: {
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   gridItem: {
     width: imageSize,
     height: imageSize,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
     position: 'relative',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
     borderWidth: 1,
-    borderColor: 'rgba(155, 97, 229, 0.2)',
+    borderColor: 'rgba(107, 114, 128, 0.2)',
   },
   gridImage: {
     width: '100%',
@@ -823,45 +862,49 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 8,
+    padding: 12,
   },
   gridPlaceholderText: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#FFFFFF',
     textAlign: 'center',
+    fontFamily: 'Inter-Regular',
   },
   likeCountOverlay: {
     position: 'absolute',
-    bottom: 6,
-    right: 6,
+    bottom: 8,
+    right: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: 12,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    gap: 2,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 4,
   },
   likeCountText: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#FFFFFF',
     fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingHorizontal: 24,
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 20,
     color: '#FFFFFF',
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontWeight: '600',
+    marginBottom: 12,
+    fontFamily: 'Inter-SemiBold',
   },
   emptySubtext: {
-    fontSize: 14,
-    color: '#A0AEC0',
+    fontSize: 16,
+    color: '#9CA3AF',
     textAlign: 'center',
+    fontFamily: 'Inter-Regular',
   },
 });

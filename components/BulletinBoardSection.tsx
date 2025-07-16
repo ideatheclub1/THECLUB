@@ -37,7 +37,7 @@ const STORAGE_KEY = '@bulletin_board_notes';
 const mockNotes: Note[] = [
   {
     id: '1',
-    title: 'Best AI ever: ChatGPT 🏆',
+    title: 'Creative breakthrough moment',
     smallImage: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=400',
     fullImage: 'https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=800',
     createdAt: 'Jan 15, 2024',
@@ -45,27 +45,19 @@ const mockNotes: Note[] = [
   },
   {
     id: '2',
-    title: 'First $100 earned! 💰',
+    title: 'First major sale',
     smallImage: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=400',
     fullImage: 'https://images.pexels.com/photos/1181677/pexels-photo-1181677.jpeg?auto=compress&cs=tinysrgb&w=800',
     createdAt: 'Feb 2, 2024',
     type: 'currency',
-    amount: 100,
+    amount: 500,
   },
   {
     id: '3',
-    title: 'Completed React Native Course 📱',
+    title: 'Gallery exhibition acceptance',
     smallImage: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=400',
     fullImage: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=800',
     createdAt: 'Mar 10, 2024',
-    type: 'sticky',
-  },
-  {
-    id: '4',
-    title: 'Published my first app! 🚀',
-    smallImage: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=400',
-    fullImage: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=800',
-    createdAt: 'Apr 5, 2024',
     type: 'sticky',
   },
 ];
@@ -169,12 +161,12 @@ export default function BulletinBoardSection({ isCurrentUser }: BulletinBoardSec
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <FileText size={48} color="#9B61E5" />
-      <Text style={[styles.emptyTitle, { fontFamily: 'PatrickHand_400Regular' }]}>
+      <FileText size={48} color="#6B7280" />
+      <Text style={[styles.emptyTitle, { fontFamily: 'Inter-Regular' }]}>
         No notes yet
       </Text>
-      <Text style={[styles.emptySubtitle, { fontFamily: 'PatrickHand_400Regular' }]}>
-        {isCurrentUser ? 'Add your first note to get started!' : 'This bulletin board is empty'}
+      <Text style={[styles.emptySubtitle, { fontFamily: 'Inter-Regular' }]}>
+        {isCurrentUser ? 'Pin your first achievement or milestone' : 'This bulletin board is empty'}
       </Text>
     </View>
   );
@@ -189,15 +181,15 @@ export default function BulletinBoardSection({ isCurrentUser }: BulletinBoardSec
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Sophisticated Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <FileText size={22} color="#9B61E5" />
-          <Text style={[styles.sectionTitle, { fontFamily: 'Caveat_400Regular' }]}>
+          <FileText size={24} color="#8B5CF6" />
+          <Text style={[styles.sectionTitle, { fontFamily: 'Inter-SemiBold' }]}>
             Bulletin Board
           </Text>
         </View>
-        <Text style={[styles.noteCount, { fontFamily: 'PatrickHand_400Regular' }]}>
+        <Text style={[styles.noteCount, { fontFamily: 'Inter-Regular' }]}>
           {notes.length} note{notes.length !== 1 ? 's' : ''}
         </Text>
       </View>
@@ -211,7 +203,7 @@ export default function BulletinBoardSection({ isCurrentUser }: BulletinBoardSec
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
-          ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+          ItemSeparatorComponent={() => <View style={{ width: 16 }} />}
         />
       ) : (
         renderEmptyState()
@@ -224,11 +216,11 @@ export default function BulletinBoardSection({ isCurrentUser }: BulletinBoardSec
           onPress={() => setShowAddModal(true)}
         >
           <LinearGradient
-            colors={['#9B61E5', '#7C3AED']}
+            colors={['#6366F1', '#8B5CF6', '#A855F7']}
             style={styles.addButtonGradient}
           >
             <Plus size={20} color="#FFFFFF" />
-            <Text style={[styles.addButtonText, { fontFamily: 'PatrickHand_400Regular' }]}>
+            <Text style={[styles.addButtonText, { fontFamily: 'Inter-SemiBold' }]}>
               Add Note
             </Text>
           </LinearGradient>
@@ -254,78 +246,85 @@ export default function BulletinBoardSection({ isCurrentUser }: BulletinBoardSec
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 20,
+    marginVertical: 32,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingHorizontal: 24,
+    marginBottom: 20,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'normal',
+    fontSize: 22,
+    fontWeight: '600',
     color: '#FFFFFF',
-    marginLeft: 8,
+    marginLeft: 12,
   },
   noteCount: {
     fontSize: 16,
-    color: '#B794F6',
+    color: '#9CA3AF',
+    fontWeight: '400',
   },
   listContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
+    paddingVertical: 60,
+    paddingHorizontal: 24,
   },
   emptyTitle: {
     fontSize: 20,
-    fontWeight: 'normal',
+    fontWeight: '600',
     color: '#FFFFFF',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 20,
+    marginBottom: 12,
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#B794F6',
+    color: '#9CA3AF',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
   },
   addButton: {
-    marginHorizontal: 20,
-    marginTop: 16,
-    borderRadius: 16,
+    marginHorizontal: 24,
+    marginTop: 20,
+    borderRadius: 24,
     overflow: 'hidden',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   addButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
+    gap: 8,
   },
   addButtonText: {
-    fontSize: 18,
-    fontWeight: 'normal',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#FFFFFF',
-    marginLeft: 8,
   },
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 60,
   },
   loadingText: {
     fontSize: 16,
-    color: '#B794F6',
+    color: '#9CA3AF',
+    fontFamily: 'Inter-Regular',
   },
 });

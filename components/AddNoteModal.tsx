@@ -168,14 +168,14 @@ export default function AddNoteModal({ visible, onClose, onAdd }: AddNoteModalPr
         <Animated.View style={[styles.backdrop, backdropStyle]} />
         
         <Animated.View style={[styles.modalContent, animatedStyle]}>
-          <BlurView intensity={100} style={styles.blurContainer}>
+          <BlurView intensity={60} style={styles.blurContainer}>
             <LinearGradient
-              colors={['rgba(26, 0, 51, 0.9)', 'rgba(45, 27, 105, 0.9)']}
+              colors={['rgba(10, 10, 10, 0.95)', 'rgba(45, 27, 105, 0.95)']}
               style={styles.gradient}
             >
               {/* Header */}
               <View style={styles.header}>
-                <Text style={[styles.title, { fontFamily: 'PatrickHand_400Regular' }]}>
+                <Text style={[styles.title, { fontFamily: 'Inter-SemiBold' }]}>
                   Add New Note
                 </Text>
                 <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
@@ -186,7 +186,7 @@ export default function AddNoteModal({ visible, onClose, onAdd }: AddNoteModalPr
               <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {/* Note Type Selection */}
                 <View style={styles.typeSelection}>
-                  <Text style={[styles.label, { fontFamily: 'PatrickHand_400Regular' }]}>
+                  <Text style={[styles.label, { fontFamily: 'Inter-Medium' }]}>
                     Note Type
                   </Text>
                   <View style={styles.typeButtons}>
@@ -197,10 +197,10 @@ export default function AddNoteModal({ visible, onClose, onAdd }: AddNoteModalPr
                       ]}
                       onPress={() => setNoteType('sticky')}
                     >
-                      <FileText size={20} color={noteType === 'sticky' ? '#FFFFFF' : '#B794F6'} />
+                      <FileText size={20} color={noteType === 'sticky' ? '#FFFFFF' : '#9CA3AF'} />
                       <Text style={[
                         styles.typeButtonText,
-                        { fontFamily: 'PatrickHand_400Regular' },
+                        { fontFamily: 'Inter-Regular' },
                         noteType === 'sticky' && styles.activeTypeButtonText
                       ]}>
                         Sticky Note
@@ -214,10 +214,10 @@ export default function AddNoteModal({ visible, onClose, onAdd }: AddNoteModalPr
                       ]}
                       onPress={() => setNoteType('currency')}
                     >
-                      <DollarSign size={20} color={noteType === 'currency' ? '#FFFFFF' : '#B794F6'} />
+                      <DollarSign size={20} color={noteType === 'currency' ? '#FFFFFF' : '#9CA3AF'} />
                       <Text style={[
                         styles.typeButtonText,
-                        { fontFamily: 'PatrickHand_400Regular' },
+                        { fontFamily: 'Inter-Regular' },
                         noteType === 'currency' && styles.activeTypeButtonText
                       ]}>
                         Currency Note
@@ -228,19 +228,19 @@ export default function AddNoteModal({ visible, onClose, onAdd }: AddNoteModalPr
 
                 {/* Title Input */}
                 <View style={styles.inputSection}>
-                  <Text style={[styles.label, { fontFamily: 'PatrickHand_400Regular' }]}>
+                  <Text style={[styles.label, { fontFamily: 'Inter-Medium' }]}>
                     {noteType === 'currency' ? 'Achievement Description' : 'Note Title'}
                   </Text>
                   <TextInput
-                    style={[styles.textInput, { fontFamily: 'PatrickHand_400Regular' }]}
+                    style={[styles.textInput, { fontFamily: 'Inter-Regular' }]}
                     placeholder="Enter your note title..."
-                    placeholderTextColor="#B794F6"
+                    placeholderTextColor="#9CA3AF"
                     value={title}
                     onChangeText={setTitle}
                     maxLength={100}
                     multiline
                   />
-                  <Text style={[styles.charCount, { fontFamily: 'PatrickHand_400Regular' }]}>
+                  <Text style={[styles.charCount, { fontFamily: 'Inter-Regular' }]}>
                     {title.length}/100
                   </Text>
                 </View>
@@ -248,13 +248,13 @@ export default function AddNoteModal({ visible, onClose, onAdd }: AddNoteModalPr
                 {/* Amount Input for Currency Notes */}
                 {noteType === 'currency' && (
                   <View style={styles.inputSection}>
-                    <Text style={[styles.label, { fontFamily: 'PatrickHand_400Regular' }]}>
+                    <Text style={[styles.label, { fontFamily: 'Inter-Medium' }]}>
                       Amount Earned
                     </Text>
                     <TextInput
-                      style={[styles.textInput, { fontFamily: 'PatrickHand_400Regular' }]}
-                      placeholder="Enter amount (e.g., 100)"
-                      placeholderTextColor="#B794F6"
+                      style={[styles.textInput, { fontFamily: 'Inter-Regular' }]}
+                      placeholder="Enter amount (e.g., 500)"
+                      placeholderTextColor="#9CA3AF"
                       value={amount}
                       onChangeText={setAmount}
                       keyboardType="numeric"
@@ -264,7 +264,7 @@ export default function AddNoteModal({ visible, onClose, onAdd }: AddNoteModalPr
 
                 {/* Small Image */}
                 <View style={styles.inputSection}>
-                  <Text style={[styles.label, { fontFamily: 'PatrickHand_400Regular' }]}>
+                  <Text style={[styles.label, { fontFamily: 'Inter-Medium' }]}>
                     Preview Image
                   </Text>
                   <TouchableOpacity
@@ -275,8 +275,8 @@ export default function AddNoteModal({ visible, onClose, onAdd }: AddNoteModalPr
                       <Image source={{ uri: smallImage }} style={styles.previewImage} />
                     ) : (
                       <View style={styles.uploadPlaceholder}>
-                        <Camera size={32} color="#B794F6" />
-                        <Text style={[styles.uploadText, { fontFamily: 'PatrickHand_400Regular' }]}>
+                        <Camera size={32} color="#9CA3AF" />
+                        <Text style={[styles.uploadText, { fontFamily: 'Inter-Regular' }]}>
                           Tap to select image
                         </Text>
                       </View>
@@ -286,7 +286,7 @@ export default function AddNoteModal({ visible, onClose, onAdd }: AddNoteModalPr
 
                 {/* Full Image */}
                 <View style={styles.inputSection}>
-                  <Text style={[styles.label, { fontFamily: 'PatrickHand_400Regular' }]}>
+                  <Text style={[styles.label, { fontFamily: 'Inter-Medium' }]}>
                     Full Image
                   </Text>
                   <TouchableOpacity
@@ -297,8 +297,8 @@ export default function AddNoteModal({ visible, onClose, onAdd }: AddNoteModalPr
                       <Image source={{ uri: fullImage }} style={styles.previewImageFull} />
                     ) : (
                       <View style={styles.uploadPlaceholder}>
-                        <Upload size={32} color="#B794F6" />
-                        <Text style={[styles.uploadText, { fontFamily: 'PatrickHand_400Regular' }]}>
+                        <Upload size={32} color="#9CA3AF" />
+                        <Text style={[styles.uploadText, { fontFamily: 'Inter-Regular' }]}>
                           Tap to select image
                         </Text>
                       </View>
@@ -313,10 +313,10 @@ export default function AddNoteModal({ visible, onClose, onAdd }: AddNoteModalPr
                   disabled={isSubmitting}
                 >
                   <LinearGradient
-                    colors={isSubmitting ? ['#666666', '#444444'] : ['#9B61E5', '#7C3AED']}
+                    colors={isSubmitting ? ['#4B5563', '#374151'] : ['#6366F1', '#8B5CF6', '#A855F7']}
                     style={styles.submitGradient}
                   >
-                    <Text style={[styles.submitText, { fontFamily: 'PatrickHand_400Regular' }]}>
+                    <Text style={[styles.submitText, { fontFamily: 'Inter-SemiBold' }]}>
                       {isSubmitting ? 'Adding Note...' : 'Add Note'}
                     </Text>
                   </LinearGradient>
@@ -342,12 +342,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
   },
   modalContent: {
     width: width * 0.9,
     maxHeight: height * 0.85,
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: 'hidden',
   },
   blurContainer: {
@@ -360,26 +360,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 20,
+    padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(155, 97, 229, 0.3)',
+    borderBottomColor: 'rgba(156, 163, 175, 0.2)',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'normal',
+    fontSize: 22,
+    fontWeight: '600',
     color: '#FFFFFF',
   },
   closeButton: {
     padding: 8,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
+    borderRadius: 20,
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: 24,
   },
   typeSelection: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   typeButtons: {
     flexDirection: 'row',
@@ -390,41 +390,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#B794F6',
-    backgroundColor: 'rgba(183, 148, 246, 0.1)',
+    borderColor: '#4B5563',
+    backgroundColor: 'rgba(75, 85, 99, 0.1)',
   },
   activeTypeButton: {
-    backgroundColor: '#9B61E5',
-    borderColor: '#9B61E5',
+    backgroundColor: '#6366F1',
+    borderColor: '#6366F1',
   },
   typeButtonText: {
     fontSize: 16,
-    color: '#B794F6',
+    color: '#9CA3AF',
     marginLeft: 8,
+    fontWeight: '500',
   },
   activeTypeButtonText: {
     color: '#FFFFFF',
   },
   inputSection: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   label: {
-    fontSize: 18,
-    fontWeight: 'normal',
+    fontSize: 16,
+    fontWeight: '500',
     color: '#FFFFFF',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   textInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#B794F6',
+    borderColor: '#4B5563',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     color: '#FFFFFF',
     fontSize: 16,
     minHeight: 80,
@@ -432,46 +433,52 @@ const styles = StyleSheet.create({
   },
   charCount: {
     fontSize: 14,
-    color: '#B794F6',
+    color: '#9CA3AF',
     textAlign: 'right',
-    marginTop: 4,
+    marginTop: 8,
   },
   imageUpload: {
-    height: 120,
-    borderRadius: 12,
+    height: 140,
+    borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#B794F6',
+    borderColor: '#4B5563',
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(183, 148, 246, 0.1)',
+    backgroundColor: 'rgba(75, 85, 99, 0.1)',
   },
   uploadPlaceholder: {
     alignItems: 'center',
   },
   uploadText: {
-    color: '#B794F6',
+    color: '#9CA3AF',
     fontSize: 16,
-    marginTop: 8,
-    fontWeight: 'normal',
+    marginTop: 12,
+    fontWeight: '500',
   },
   previewImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    borderRadius: 14,
   },
   previewImageFull: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    borderRadius: 14,
   },
   submitButton: {
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     marginBottom: 20,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   disabledButton: {
     opacity: 0.7,
+    shadowOpacity: 0.1,
   },
   submitGradient: {
     paddingVertical: 16,
@@ -480,8 +487,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   submitText: {
-    fontSize: 18,
-    fontWeight: 'normal',
+    fontSize: 16,
+    fontWeight: '600',
     color: '#FFFFFF',
   },
 });

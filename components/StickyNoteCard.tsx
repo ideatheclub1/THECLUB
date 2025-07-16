@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts, PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
 import Animated, {
   useSharedValue,
@@ -15,7 +14,6 @@ import Animated, {
   withSpring,
   withTiming,
   interpolate,
-  runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -40,12 +38,13 @@ interface StickyNoteCardProps {
 
 const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
-const noteColors = [
-  '#FFF59D', // Light yellow
-  '#FFE0B2', // Light orange
-  '#F8BBD9', // Light pink
-  '#E1F5FE', // Light blue
-  '#C8E6C9', // Light green
+// Vintage paper colors
+const vintagePaperColors = [
+  '#F7F3E9', // Aged white
+  '#F5F0E1', // Cream
+  '#F2EDD7', // Antique white
+  '#F0EBD8', // Parchment
+  '#EDE6D6', // Old paper
 ];
 
 export default function StickyNoteCard({ note, onImagePress, index }: StickyNoteCardProps) {
@@ -55,28 +54,25 @@ export default function StickyNoteCard({ note, onImagePress, index }: StickyNote
 
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
-  const wiggle = useSharedValue(0);
+  const fold = useSharedValue(0);
 
-  // Generate random rotation and color for sticky note effect
+  // Generate random rotation and color for realistic effect
   const baseRotation = (index % 2 === 0 ? 1 : -1) * (Math.random() * 6 + 2);
-  const noteColor = noteColors[index % noteColors.length];
+  const paperColor = vintagePaperColors[index % vintagePaperColors.length];
 
   React.useEffect(() => {
     rotation.value = withSpring(baseRotation, { damping: 20 });
-    
-    // Add subtle wiggle animation
-    wiggle.value = withSpring(Math.random() * 0.5 - 0.25, { damping: 15 });
   }, []);
 
   const handlePressIn = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    scale.value = withSpring(0.95);
-    wiggle.value = withSpring(Math.random() * 1 - 0.5, { damping: 10 });
+    scale.value = withSpring(0.96);
+    fold.value = withSpring(0.3);
   };
 
   const handlePressOut = () => {
     scale.value = withSpring(1);
-    wiggle.value = withSpring(0, { damping: 15 });
+    fold.value = withSpring(0);
   };
 
   const handleImagePress = () => {
@@ -88,15 +84,17 @@ export default function StickyNoteCard({ note, onImagePress, index }: StickyNote
     return {
       transform: [
         { scale: scale.value },
-        { rotate: `${rotation.value + wiggle.value}deg` },
+        { rotate: `${rotation.value}deg` },
+        { perspective: 1000 },
+        { rotateX: `${fold.value * 5}deg` },
       ],
     };
   });
 
   const shadowAnimatedStyle = useAnimatedStyle(() => {
     return {
-      shadowOpacity: interpolate(scale.value, [0.95, 1], [0.2, 0.3]),
-      shadowRadius: interpolate(scale.value, [0.95, 1], [10, 15]),
+      shadowOpacity: interpolate(scale.value, [0.96, 1], [0.3, 0.6]),
+      shadowRadius: interpolate(scale.value, [0.96, 1], [12, 20]),
     };
   });
 
@@ -111,21 +109,32 @@ export default function StickyNoteCard({ note, onImagePress, index }: StickyNote
       onPressOut={handlePressOut}
       activeOpacity={0.9}
     >
-      <View style={[styles.card, { backgroundColor: noteColor }]}>
-        {/* Pin effect */}
-        <View style={styles.pin} />
-        
-        {/* Peeling corner effect */}
-        <View style={styles.peelingCorner}>
-          <View style={[styles.peelingTriangle, { borderBottomColor: noteColor }]} />
-          <View style={styles.peelingTriangleInner} />
+      <View style={[styles.card, { backgroundColor: paperColor }]}>
+        {/* Torn edges effect */}
+        <View style={styles.tornEdges}>
+          <View style={[styles.tornEdge, styles.topLeft]} />
+          <View style={[styles.tornEdge, styles.topRight]} />
+          <View style={[styles.tornEdge, styles.bottomLeft]} />
+          <View style={[styles.tornEdge, styles.bottomRight]} />
         </View>
         
-        {/* Ruled lines background */}
+        {/* Realistic pin */}
+        <View style={styles.pin}>
+          <View style={styles.pinHead} />
+          <View style={styles.pinShaft} />
+        </View>
+        
+        {/* Vintage ruled lines */}
         <View style={styles.ruledLines}>
-          {[...Array(9)].map((_, i) => (
+          {[...Array(10)].map((_, i) => (
             <View key={i} style={styles.ruledLine} />
           ))}
+        </View>
+        
+        {/* Stain effects */}
+        <View style={styles.stains}>
+          <View style={[styles.stain, styles.stain1]} />
+          <View style={[styles.stain, styles.stain2]} />
         </View>
         
         {/* Content */}
@@ -164,81 +173,125 @@ const styles = StyleSheet.create({
     width: cardWidth,
     marginHorizontal: 8,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 15,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
   },
   card: {
     borderRadius: 8,
-    padding: 16,
-    minHeight: 240,
+    padding: 20,
+    minHeight: 260,
     position: 'relative',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
+  },
+  tornEdges: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  tornEdge: {
+    position: 'absolute',
+    backgroundColor: 'rgba(139, 69, 19, 0.15)',
+    borderRadius: 2,
+  },
+  topLeft: {
+    top: 0,
+    left: 0,
+    width: 20,
+    height: 3,
+    transform: [{ rotate: '45deg' }],
+  },
+  topRight: {
+    top: 2,
+    right: 5,
+    width: 15,
+    height: 2,
+    transform: [{ rotate: '-30deg' }],
+  },
+  bottomLeft: {
+    bottom: 5,
+    left: 3,
+    width: 18,
+    height: 2,
+    transform: [{ rotate: '20deg' }],
+  },
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    width: 22,
+    height: 3,
+    transform: [{ rotate: '-45deg' }],
   },
   pin: {
     position: 'absolute',
     top: 8,
     left: '50%',
-    marginLeft: -8,
-    width: 16,
-    height: 16,
+    marginLeft: -6,
+    alignItems: 'center',
+  },
+  pinHead: {
+    width: 12,
+    height: 12,
     backgroundColor: '#DC2626',
-    borderRadius: 8,
+    borderRadius: 6,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.5,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 6,
   },
-  peelingCorner: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 20,
-    height: 20,
-  },
-  peelingTriangle: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 20,
-    borderBottomWidth: 20,
-    borderLeftColor: 'transparent',
-    borderBottomColor: '#FFF59D',
-  },
-  peelingTriangleInner: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 16,
-    borderBottomWidth: 16,
-    borderLeftColor: 'transparent',
-    borderBottomColor: '#FFFFFF',
+  pinShaft: {
+    width: 2,
+    height: 8,
+    backgroundColor: '#B91C1C',
+    marginTop: -2,
+    borderRadius: 1,
   },
   ruledLines: {
     position: 'absolute',
-    top: 30,
+    top: 35,
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   ruledLine: {
     height: 1,
-    backgroundColor: '#E0E0E0',
-    marginVertical: 14,
+    backgroundColor: '#B0BEC5',
+    marginVertical: 16,
+    opacity: 0.3,
+  },
+  stains: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  stain: {
+    position: 'absolute',
+    backgroundColor: 'rgba(139, 69, 19, 0.08)',
+    borderRadius: 10,
+  },
+  stain1: {
+    top: 40,
+    right: 20,
+    width: 15,
+    height: 12,
+  },
+  stain2: {
+    bottom: 30,
+    left: 15,
+    width: 20,
+    height: 8,
   },
   cardContent: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 12,
+    marginTop: 16,
     zIndex: 1,
   },
   title: {
@@ -246,17 +299,17 @@ const styles = StyleSheet.create({
     fontWeight: 'normal',
     color: '#2D3748',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
     lineHeight: 24,
     transform: [{ rotate: '0.5deg' }],
   },
   imageContainer: {
     position: 'relative',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   smallImage: {
-    width: 80,
-    height: 80,
+    width: 85,
+    height: 85,
     borderRadius: 8,
     borderWidth: 2,
     borderColor: '#2D3748',
@@ -266,10 +319,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
-    paddingVertical: 2,
+    paddingVertical: 3,
   },
   tapText: {
     color: '#FFFFFF',
@@ -279,7 +332,7 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 14,
-    color: '#666666',
+    color: '#555555',
     fontWeight: 'normal',
     transform: [{ rotate: '-0.5deg' }],
   },

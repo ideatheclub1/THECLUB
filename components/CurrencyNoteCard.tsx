@@ -15,7 +15,6 @@ import Animated, {
   withSpring,
   withTiming,
   interpolate,
-  runOnJS,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { DollarSign, Star } from 'lucide-react-native';
@@ -48,25 +47,24 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
 
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
-  const shimmer = useSharedValue(0);
+  const crinkle = useSharedValue(0);
 
   // Generate slight rotation for realistic effect
   const baseRotation = (index % 2 === 0 ? 1 : -1) * (Math.random() * 3 + 1);
 
   React.useEffect(() => {
     rotation.value = withSpring(baseRotation, { damping: 20 });
-    
-    // Add shimmer effect
-    shimmer.value = withSpring(1, { damping: 10 });
   }, []);
 
   const handlePressIn = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    scale.value = withSpring(0.95);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    scale.value = withSpring(0.94);
+    crinkle.value = withSpring(0.5);
   };
 
   const handlePressOut = () => {
     scale.value = withSpring(1);
+    crinkle.value = withSpring(0);
   };
 
   const handleImagePress = () => {
@@ -79,20 +77,16 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
       transform: [
         { scale: scale.value },
         { rotate: `${rotation.value}deg` },
+        { perspective: 1000 },
+        { rotateY: `${crinkle.value * 3}deg` },
       ],
     };
   });
 
   const shadowAnimatedStyle = useAnimatedStyle(() => {
     return {
-      shadowOpacity: interpolate(scale.value, [0.95, 1], [0.3, 0.5]),
-      shadowRadius: interpolate(scale.value, [0.95, 1], [15, 20]),
-    };
-  });
-
-  const shimmerStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(shimmer.value, [0, 1], [0.3, 0.7]),
+      shadowOpacity: interpolate(scale.value, [0.94, 1], [0.4, 0.7]),
+      shadowRadius: interpolate(scale.value, [0.94, 1], [20, 30]),
     };
   });
 
@@ -108,21 +102,28 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
       activeOpacity={0.9}
     >
       <LinearGradient
-        colors={['#2D5016', '#4A7C59', '#2D5016']}
+        colors={['#1B4332', '#2D5016', '#40531B', '#1B4332']}
         style={styles.currencyCard}
       >
-        {/* Decorative border */}
-        <View style={styles.decorativeBorder} />
+        {/* Worn edges effect */}
+        <View style={styles.wornEdges}>
+          <View style={[styles.wornEdge, styles.topEdge]} />
+          <View style={[styles.wornEdge, styles.bottomEdge]} />
+          <View style={[styles.wornEdge, styles.leftEdge]} />
+          <View style={[styles.wornEdge, styles.rightEdge]} />
+        </View>
         
-        {/* Shimmer effect */}
-        <Animated.View style={[styles.shimmerOverlay, shimmerStyle]} />
+        {/* Ornate border pattern */}
+        <View style={styles.ornatePattern}>
+          <View style={styles.borderPattern} />
+          <View style={[styles.borderPattern, styles.innerBorder]} />
+        </View>
         
-        {/* Ornate corners */}
-        <View style={styles.ornateCorners}>
-          <View style={[styles.corner, styles.topLeft]} />
-          <View style={[styles.corner, styles.topRight]} />
-          <View style={[styles.corner, styles.bottomLeft]} />
-          <View style={[styles.corner, styles.bottomRight]} />
+        {/* Vintage texture overlay */}
+        <View style={styles.textureOverlay}>
+          <View style={[styles.textureSpot, styles.spot1]} />
+          <View style={[styles.textureSpot, styles.spot2]} />
+          <View style={[styles.textureSpot, styles.spot3]} />
         </View>
         
         {/* Header */}
@@ -138,7 +139,7 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
         {/* Content */}
         <View style={styles.currencyContent}>
           <View style={styles.amountSection}>
-            <DollarSign size={24} color="#FFD700" />
+            <DollarSign size={28} color="#D4AF37" />
             <Text style={[styles.amount, { fontFamily: 'PatrickHand_400Regular' }]}>
               {note.amount || 0}
             </Text>
@@ -173,7 +174,7 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
         <View style={styles.currencyFooter}>
           <View style={styles.starPattern}>
             {[...Array(5)].map((_, i) => (
-              <Star key={i} size={8} color="#FFD700" fill="#FFD700" />
+              <Star key={i} size={8} color="#D4AF37" fill="#D4AF37" />
             ))}
           </View>
           <Text style={[styles.footerText, { fontFamily: 'PatrickHand_400Regular' }]}>
@@ -189,94 +190,132 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: cardWidth,
     marginHorizontal: 8,
-    shadowColor: '#2D5016',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowColor: '#1B4332',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.6,
+    shadowRadius: 25,
+    elevation: 15,
   },
   currencyCard: {
-    borderRadius: 12,
-    padding: 20,
-    minHeight: 280,
+    borderRadius: 16,
+    padding: 24,
+    minHeight: 320,
     position: 'relative',
-    borderWidth: 2,
-    borderColor: '#FFD700',
+    borderWidth: 3,
+    borderColor: '#D4AF37',
   },
-  decorativeBorder: {
+  wornEdges: {
     position: 'absolute',
-    top: 4,
-    left: 4,
-    right: 4,
-    bottom: 4,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  wornEdge: {
+    position: 'absolute',
+    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+  },
+  topEdge: {
+    top: 0,
+    left: 20,
+    right: 30,
+    height: 2,
+    borderRadius: 1,
+  },
+  bottomEdge: {
+    bottom: 0,
+    left: 25,
+    right: 20,
+    height: 2,
+    borderRadius: 1,
+  },
+  leftEdge: {
+    left: 0,
+    top: 30,
+    bottom: 25,
+    width: 2,
+    borderRadius: 1,
+  },
+  rightEdge: {
+    right: 0,
+    top: 20,
+    bottom: 30,
+    width: 2,
+    borderRadius: 1,
+  },
+  ornatePattern: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: 8,
+    bottom: 8,
+  },
+  borderPattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     borderWidth: 1,
-    borderColor: '#FFD700',
-    borderRadius: 8,
-    opacity: 0.6,
-  },
-  shimmerOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderColor: '#D4AF37',
     borderRadius: 12,
+    opacity: 0.7,
   },
-  ornateCorners: {
+  innerBorder: {
+    top: 6,
+    left: 6,
+    right: 6,
+    bottom: 6,
+    opacity: 0.4,
+  },
+  textureOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
-  corner: {
+  textureSpot: {
     position: 'absolute',
-    width: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderRadius: 20,
+  },
+  spot1: {
+    top: 40,
+    left: 30,
+    width: 30,
+    height: 25,
+  },
+  spot2: {
+    top: 200,
+    right: 40,
+    width: 25,
     height: 20,
-    borderColor: '#FFD700',
   },
-  topLeft: {
-    top: 8,
-    left: 8,
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-  },
-  topRight: {
-    top: 8,
-    right: 8,
-    borderTopWidth: 2,
-    borderRightWidth: 2,
-  },
-  bottomLeft: {
-    bottom: 8,
-    left: 8,
-    borderBottomWidth: 2,
-    borderLeftWidth: 2,
-  },
-  bottomRight: {
-    bottom: 8,
-    right: 8,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
+  spot3: {
+    bottom: 80,
+    left: 50,
+    width: 35,
+    height: 30,
   },
   currencyHeader: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   currencyTitle: {
-    fontSize: 12,
-    color: '#FFD700',
+    fontSize: 14,
+    color: '#D4AF37',
     fontWeight: 'normal',
-    letterSpacing: 1,
+    letterSpacing: 2,
   },
   serialNumber: {
-    marginTop: 4,
+    marginTop: 6,
   },
   serialText: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#A0C4A0',
     fontFamily: 'monospace',
+    letterSpacing: 1,
   },
   currencyContent: {
     alignItems: 'center',
@@ -285,11 +324,11 @@ const styles = StyleSheet.create({
   amountSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   amount: {
-    fontSize: 28,
-    color: '#FFD700',
+    fontSize: 32,
+    color: '#D4AF37',
     fontWeight: 'normal',
     marginLeft: 8,
   },
@@ -297,33 +336,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#E8F5E8',
     textAlign: 'center',
-    marginBottom: 12,
-    lineHeight: 20,
+    marginBottom: 16,
+    lineHeight: 22,
   },
   imageContainer: {
     position: 'relative',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   smallImage: {
-    width: 60,
-    height: 60,
+    width: 70,
+    height: 70,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#D4AF37',
   },
   imageOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
     paddingVertical: 2,
   },
   tapText: {
     color: '#FFFFFF',
-    fontSize: 8,
+    fontSize: 9,
     textAlign: 'center',
     fontWeight: 'normal',
   },
@@ -334,17 +373,17 @@ const styles = StyleSheet.create({
   },
   currencyFooter: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 20,
   },
   starPattern: {
     flexDirection: 'row',
-    gap: 4,
-    marginBottom: 4,
+    gap: 6,
+    marginBottom: 6,
   },
   footerText: {
     fontSize: 10,
-    color: '#FFD700',
+    color: '#D4AF37',
     fontWeight: 'normal',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
   },
 });
