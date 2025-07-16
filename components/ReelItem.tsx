@@ -24,18 +24,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
-import { 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  Bookmark, 
-  Music, 
-  MoreHorizontal,
-  Volume2,
-  VolumeX,
-  Play,
-  Pause
-} from 'lucide-react-native';
+import { Heart, MessageCircle, Share2, Bookmark, Music, MoveHorizontal as MoreHorizontal, Volume2, VolumeX, Play, Pause } from 'lucide-react-native';
 import { Reel } from '../data/mockReels';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
