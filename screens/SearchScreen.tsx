@@ -10,10 +10,24 @@ import {
   Switch,
   Modal,
   SafeAreaView,
+  Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Filter, MessageCircle, MapPin, Star, Heart, Search, X, ChevronDown } from 'lucide-react-native';
+import { BlurView } from 'expo-blur';
+import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { Filter, MessageCircle, MapPin, Star, Heart, Search, X, ChevronDown, Bell } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = width > 400 ? (width - 64) / 2 : width - 32;
 
 interface User {
   id: string;
@@ -101,112 +115,23 @@ const mockUsers: User[] = [
     role: 'Boyfriend',
     gender: 'Male'
   },
-  {
-    id: '7',
-    name: 'Jessica Martinez',
-    age: 27,
-    rating: 4.9,
-    location: 'Austin, TX',
-    hourlyRate: 48,
-    profileImage: 'https://images.pexels.com/photos/1542085/pexels-photo-1542085.jpeg?auto=compress&cs=tinysrgb&w=400',
-    tags: ['Wellness Coach', 'Meditation'],
-    role: 'Friend',
-    gender: 'Female'
-  },
-  {
-    id: '8',
-    name: 'Ryan O\'Connor',
-    age: 31,
-    rating: 4.7,
-    location: 'Denver, CO',
-    hourlyRate: 52,
-    profileImage: 'https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=400',
-    tags: ['Fitness Coach', 'Motivator'],
-    role: 'Boyfriend',
-    gender: 'Male'
-  },
-  {
-    id: '9',
-    name: 'Sophia Lee',
-    age: 25,
-    rating: 4.8,
-    location: 'Portland, OR',
-    hourlyRate: 38,
-    profileImage: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=400',
-    tags: ['Art Therapy', 'Creative Support'],
-    role: 'Listener',
-    gender: 'Female'
-  },
-  {
-    id: '10',
-    name: 'Marcus Johnson',
-    age: 38,
-    rating: 4.6,
-    location: 'Atlanta, GA',
-    hourlyRate: 58,
-    profileImage: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=400',
-    tags: ['Business Mentor', 'Life Coach'],
-    role: 'Father',
-    gender: 'Male'
-  },
-  {
-    id: '11',
-    name: 'Isabella Garcia',
-    age: 29,
-    rating: 4.9,
-    location: 'Phoenix, AZ',
-    hourlyRate: 46,
-    profileImage: 'https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=400',
-    tags: ['Relationship Coach', 'Therapist'],
-    role: 'Girlfriend',
-    gender: 'Female'
-  },
-  {
-    id: '12',
-    name: 'James Wilson',
-    age: 33,
-    rating: 4.5,
-    location: 'Nashville, TN',
-    hourlyRate: 44,
-    profileImage: 'https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=400',
-    tags: ['Music Therapy', 'Creative Arts'],
-    role: 'Friend',
-    gender: 'Male'
-  }
 ];
 
-const popularLocations = [
-  'New York, NY',
-  'Los Angeles, CA',
-  'Chicago, IL',
-  'Houston, TX',
-  'Phoenix, AZ',
-  'Philadelphia, PA',
-  'San Antonio, TX',
-  'San Diego, CA',
-  'Dallas, TX',
-  'San Jose, CA'
-];
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function SearchScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [showLocalHosts, setShowLocalHosts] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState('Los Angeles, CA');
-  const [showLocationModal, setShowLocationModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [locationSearch, setLocationSearch] = useState('');
   
-  // Filter states
-  const [minAge, setMinAge] = useState('18');
-  const [maxAge, setMaxAge] = useState('65');
-  const [selectedRole, setSelectedRole] = useState('All Roles');
-  const [selectedGender, setSelectedGender] = useState('All');
-  const [selectedRating, setSelectedRating] = useState('Any');
-
-  const roles = ['All Roles', 'Boyfriend', 'Girlfriend', 'Listener', 'Mother', 'Father', 'Friend'];
-  const genders = ['All', 'Male', 'Female', 'Other'];
-  const ratings = ['Any', '3+', '4+', '4.5+', '4.8+'];
+  // Load Inter fonts
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
 
   const filteredUsers = mockUsers.filter(user => {
     const matchesSearch = searchQuery === '' || 
@@ -214,31 +139,15 @@ export default function SearchScreen() {
       user.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
       user.role.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesRole = selectedRole === 'All Roles' || user.role === selectedRole;
-    const matchesGender = selectedGender === 'All' || user.gender === selectedGender;
-    const matchesAge = user.age >= parseInt(minAge) && user.age <= parseInt(maxAge);
-    
-    let matchesRating = true;
-    if (selectedRating !== 'Any') {
-      const minRating = parseFloat(selectedRating.replace('+', ''));
-      matchesRating = user.rating >= minRating;
-    }
-
-    return matchesSearch && matchesRole && matchesGender && matchesAge && matchesRating;
+    return matchesSearch;
   });
-
-  const handleLocationSelect = (location: string) => {
-    setCurrentLocation(location);
-    setShowLocationModal(false);
-  };
-
-  const handleUseCurrentLocation = () => {
-    setCurrentLocation('Current Location');
-    setShowLocationModal(false);
-  };
 
   const handleMessagesPress = () => {
     router.push('/(tabs)/messages');
+  };
+
+  const handleNotificationPress = () => {
+    // Handle notification press
   };
 
   const renderStars = (rating: number) => {
@@ -246,251 +155,205 @@ export default function SearchScreen() {
       <Star
         key={index}
         size={12}
-        color={index < Math.floor(rating) ? '#FFD700' : '#666'}
+        color={index < Math.floor(rating) ? '#FFD700' : '#4A4A4A'}
         fill={index < Math.floor(rating) ? '#FFD700' : 'transparent'}
       />
     ));
   };
 
-  const renderUserCard = (user: User) => (
-    <TouchableOpacity 
-      key={user.id} 
-      style={styles.userCard}
-      onPress={() => {
-        if (user.id === '1') {
-          Alert.alert(
-            'Your Profile',
-            'You are viewing your own profile. To make changes, go to your settings.',
-            [
-              { text: 'OK', style: 'cancel' },
-              { 
-                text: 'Go to Profile', 
-                onPress: () => router.push('/(tabs)/profile')
-              }
-            ]
-          );
-          return;
-        }
-        router.push({
-          pathname: '/ProfileScreen',
-          params: { userId: user.id }
-        });
-      }}
-    >
-      <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
-      <View style={styles.userInfo}>
-        <View style={styles.nameRatingRow}>
-          <Text style={styles.userName}>{user.name}</Text>
-          <View style={styles.ratingContainer}>
-            {renderStars(user.rating)}
-            <Text style={styles.ratingText}>{user.rating}</Text>
-          </View>
-        </View>
-        <Text style={styles.hourlyRate}>${user.hourlyRate}/hr</Text>
-        <Text style={styles.location}>{user.location}</Text>
-        <Text style={styles.tags}>{user.tags.join(' • ')}</Text>
+  const UserCard = ({ user, index }: { user: User; index: number }) => {
+    const scale = useSharedValue(1);
+    const shadowOpacity = useSharedValue(0.2);
+
+    const handlePressIn = () => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      scale.value = withSpring(0.96);
+      shadowOpacity.value = withTiming(0.4);
+    };
+
+    const handlePressOut = () => {
+      scale.value = withSpring(1);
+      shadowOpacity.value = withTiming(0.2);
+    };
+
+    const handlePress = () => {
+      router.push({
+        pathname: '/ProfileScreen',
+        params: { userId: user.id }
+      });
+    };
+
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: scale.value }],
+      shadowOpacity: shadowOpacity.value,
+    }));
+
+    return (
+      <AnimatedTouchableOpacity
+        style={[styles.userCard, animatedStyle]}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+        activeOpacity={0.9}
+      >
+        <BlurView intensity={20} style={styles.cardBlur}>
+          <LinearGradient
+            colors={['rgba(42, 42, 42, 0.95)', 'rgba(58, 58, 58, 0.85)']}
+            style={styles.cardGradient}
+          >
+            {/* Profile Image */}
+            <View style={styles.imageContainer}>
+              <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
+              <View style={styles.onlineIndicator} />
+            </View>
+
+            {/* User Info */}
+            <View style={styles.userInfo}>
+              <Text style={[styles.userName, { fontFamily: 'Inter_700Bold' }]} numberOfLines={1}>
+                {user.name}
+              </Text>
+              
+              <View style={styles.locationRow}>
+                <MapPin size={14} color="#999999" />
+                <Text style={[styles.locationText, { fontFamily: 'Inter_400Regular' }]} numberOfLines={1}>
+                  {user.location}
+                </Text>
+              </View>
+
+              {/* Tags */}
+              <View style={styles.tagsContainer}>
+                {user.tags.slice(0, 2).map((tag, tagIndex) => (
+                  <View key={tagIndex} style={styles.tag}>
+                    <Text style={[styles.tagText, { fontFamily: 'Inter_500Medium' }]}>
+                      {tag}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Rating */}
+              <View style={styles.ratingContainer}>
+                <View style={styles.starsRow}>
+                  {renderStars(user.rating)}
+                </View>
+                <Text style={[styles.ratingText, { fontFamily: 'Inter_500Medium' }]}>
+                  {user.rating}
+                </Text>
+              </View>
+
+              {/* Price */}
+              <Text style={[styles.priceText, { fontFamily: 'Inter_600SemiBold' }]}>
+                ${user.hourlyRate}/hr
+              </Text>
+            </View>
+          </LinearGradient>
+        </BlurView>
+      </AnimatedTouchableOpacity>
+    );
+  };
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
-    </TouchableOpacity>
-  );
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#0f0518', '#1a0a2e', '#16213e', '#0f0518']}
+        colors={['#1E1E1E', '#2A2A2A', '#1E1E1E']}
         style={styles.background}
       >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Heart size={24} color="#c77dff" fill="#c77dff" />
-            <Text style={styles.logoText}>The Club</Text>
+            <Heart size={24} color="#E74C3C" fill="#E74C3C" />
+            <Text style={[styles.logoText, { fontFamily: 'Inter_700Bold' }]}>
+              The Club
+            </Text>
           </View>
+          
           <View style={styles.headerIcons}>
-            <TouchableOpacity onPress={() => setShowFilterModal(true)} style={styles.iconButton}>
-              <Filter size={24} color="#c77dff" />
+            <TouchableOpacity 
+              onPress={handleNotificationPress} 
+              style={styles.iconButton}
+            >
+              <Bell size={22} color="#CCCCCC" />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.badgeText}>2</Text>
+              </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleMessagesPress} style={styles.iconButton}>
-              <MessageCircle size={24} color="#c77dff" />
+            
+            <TouchableOpacity 
+              onPress={handleMessagesPress} 
+              style={styles.iconButton}
+            >
+              <MessageCircle size={22} color="#CCCCCC" />
             </TouchableOpacity>
           </View>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Search Bar */}
-          <View style={styles.searchContainer}>
-            <Search size={20} color="#a855f7" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search by username, interests, roles..."
-              placeholderTextColor="#a855f7"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <X size={20} color="#a855f7" />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Location and Local Host Bar */}
-          <View style={styles.locationHostBar}>
-            <TouchableOpacity style={styles.setLocationButton} onPress={() => setShowLocationModal(true)}>
-              <MapPin size={16} color="#c77dff" />
-              <Text style={styles.setLocationText}>Set Location</Text>
-              <ChevronDown size={16} color="#c77dff" />
-            </TouchableOpacity>
-            
-            <View style={styles.localHostToggle}>
-              <Text style={styles.toggleText}>Local Hosts</Text>
-              <Switch
-                value={showLocalHosts}
-                onValueChange={setShowLocalHosts}
-                trackColor={{ false: '#333', true: '#c77dff' }}
-                thumbColor={showLocalHosts ? '#fff' : '#f4f3f4'}
+          {/* Search Section */}
+          <View style={styles.searchSection}>
+            <View style={styles.searchContainer}>
+              <Search size={20} color="#999999" style={styles.searchIcon} />
+              <TextInput
+                style={[styles.searchInput, { fontFamily: 'Inter_400Regular' }]}
+                placeholder="Search by name, skills, or interests..."
+                placeholderTextColor="#999999"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
               />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <X size={20} color="#999999" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Filter Row */}
+            <View style={styles.filterRow}>
+              <TouchableOpacity 
+                style={styles.filterButton} 
+                onPress={() => setShowFilterModal(true)}
+              >
+                <Filter size={18} color="#A66DD3" />
+                <Text style={[styles.filterText, { fontFamily: 'Inter_500Medium' }]}>
+                  Filters
+                </Text>
+              </TouchableOpacity>
+              
+              <View style={styles.localHostToggle}>
+                <Text style={[styles.toggleText, { fontFamily: 'Inter_500Medium' }]}>
+                  Local Hosts
+                </Text>
+                <Switch
+                  value={showLocalHosts}
+                  onValueChange={setShowLocalHosts}
+                  trackColor={{ false: '#3A3A3A', true: '#A66DD3' }}
+                  thumbColor={showLocalHosts ? '#FFFFFF' : '#CCCCCC'}
+                  ios_backgroundColor="#3A3A3A"
+                />
+              </View>
             </View>
           </View>
 
-          {/* Current Location Display */}
-          <View style={styles.currentLocationContainer}>
-            <Text style={styles.currentLocationText}>Current: {currentLocation}</Text>
-          </View>
-
-          {/* Discover People Section */}
-          <View style={styles.discoverSection}>
-            <Text style={styles.sectionTitle}>Discover People ({filteredUsers.length})</Text>
-            <View style={styles.userGrid}>
-              {filteredUsers.map(renderUserCard)}
+          {/* Users Grid */}
+          <View style={styles.usersSection}>
+            <Text style={[styles.sectionTitle, { fontFamily: 'Inter_600SemiBold' }]}>
+              Discover People ({filteredUsers.length})
+            </Text>
+            
+            <View style={styles.usersGrid}>
+              {filteredUsers.map((user, index) => (
+                <UserCard key={user.id} user={user} index={index} />
+              ))}
             </View>
           </View>
         </ScrollView>
-
-        {/* Location Modal */}
-        <Modal visible={showLocationModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Set Location</Text>
-                <TouchableOpacity onPress={() => setShowLocationModal(false)}>
-                  <X size={24} color="#c77dff" />
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity style={styles.locationOption} onPress={handleUseCurrentLocation}>
-                <MapPin size={20} color="#c77dff" />
-                <Text style={styles.locationOptionText}>Use Current Location</Text>
-              </TouchableOpacity>
-
-              <View style={styles.searchLocationContainer}>
-                <TextInput
-                  style={styles.searchLocationInput}
-                  placeholder="Search for a city or area"
-                  placeholderTextColor="#a855f7"
-                  value={locationSearch}
-                  onChangeText={setLocationSearch}
-                />
-              </View>
-
-              <Text style={styles.popularTitle}>Popular Locations</Text>
-              <ScrollView style={styles.popularLocations}>
-                {popularLocations.map((location, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.locationOption}
-                    onPress={() => handleLocationSelect(location)}
-                  >
-                    <Text style={styles.locationOptionText}>{location}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
-
-        {/* Filter Modal */}
-        <Modal visible={showFilterModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Filter Options</Text>
-                <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                  <X size={24} color="#c77dff" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Age Range */}
-              <Text style={styles.filterLabel}>Age Range</Text>
-              <View style={styles.ageRangeContainer}>
-                <TextInput
-                  style={styles.ageInput}
-                  placeholder="Min"
-                  placeholderTextColor="#a855f7"
-                  value={minAge}
-                  onChangeText={setMinAge}
-                  keyboardType="numeric"
-                />
-                <Text style={styles.ageRangeText}>to</Text>
-                <TextInput
-                  style={styles.ageInput}
-                  placeholder="Max"
-                  placeholderTextColor="#a855f7"
-                  value={maxAge}
-                  onChangeText={setMaxAge}
-                  keyboardType="numeric"
-                />
-              </View>
-
-              {/* Relationship Role */}
-              <Text style={styles.filterLabel}>Relationship Role</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.roleContainer}>
-                {roles.map((role) => (
-                  <TouchableOpacity
-                    key={role}
-                    style={[styles.roleChip, selectedRole === role && styles.selectedRoleChip]}
-                    onPress={() => setSelectedRole(role)}
-                  >
-                    <Text style={[styles.roleText, selectedRole === role && styles.selectedRoleText]}>
-                      {role}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              {/* Gender */}
-              <Text style={styles.filterLabel}>Gender</Text>
-              <View style={styles.genderContainer}>
-                {genders.map((gender) => (
-                  <TouchableOpacity
-                    key={gender}
-                    style={[styles.genderButton, selectedGender === gender && styles.selectedGenderButton]}
-                    onPress={() => setSelectedGender(gender)}
-                  >
-                    <Text style={[styles.genderText, selectedGender === gender && styles.selectedGenderText]}>
-                      {gender}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Minimum Rating */}
-              <Text style={styles.filterLabel}>Minimum Rating</Text>
-              <View style={styles.ratingFilterContainer}>
-                {ratings.map((rating) => (
-                  <TouchableOpacity
-                    key={rating}
-                    style={[styles.ratingButton, selectedRating === rating && styles.selectedRatingButton]}
-                    onPress={() => setSelectedRating(rating)}
-                  >
-                    <Text style={[styles.ratingButtonText, selectedRating === rating && styles.selectedRatingButtonText]}>
-                      {rating}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          </View>
-        </Modal>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -503,336 +366,228 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1E1E1E',
+  },
+  loadingText: {
+    color: '#F2F2F2',
+    fontSize: 16,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
-    backgroundColor: '#121212',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#3A3A3A',
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   logoText: {
-    color: '#9B61E5',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 8,
+    color: '#F2F2F2',
+    fontSize: 22,
+    fontWeight: '700',
+    marginLeft: 12,
   },
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 16,
   },
   iconButton: {
-    marginLeft: 15,
     padding: 8,
-    backgroundColor: '#121212',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#9B61E5',
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: '#8A2BE2',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+  },
+  searchSection: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#121212',
-    borderRadius: 25,
-    paddingHorizontal: 15,
+    backgroundColor: '#2A2A2A',
+    borderRadius: 24,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#9B61E5',
+    borderColor: '#3A3A3A',
+    marginBottom: 16,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
-    color: '#FFFFFF',
+    color: '#F2F2F2',
     fontSize: 16,
   },
-  locationHostBar: {
+  filterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#121212',
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#9B61E5',
   },
-  setLocationButton: {
+  filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    backgroundColor: '#2A2A2A',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#3A3A3A',
   },
-  setLocationText: {
-    color: '#9B61E5',
-    fontSize: 16,
+  filterText: {
+    color: '#A66DD3',
+    fontSize: 14,
     marginLeft: 8,
-    marginRight: 8,
   },
   localHostToggle: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
   toggleText: {
-    color: '#9B61E5',
+    color: '#CCCCCC',
     fontSize: 14,
-    marginRight: 8,
   },
-  currentLocationContainer: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    marginBottom: 20,
-  },
-  currentLocationText: {
-    color: '#A0A0A0',
-    fontSize: 14,
-    opacity: 0.8,
-  },
-  discoverSection: {
-    marginBottom: 30,
+  usersSection: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
   },
   sectionTitle: {
-    color: '#FFFFFF',
     fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    color: '#F2F2F2',
+    marginBottom: 20,
   },
-  userGrid: {
+  usersGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: 16,
+    justifyContent: width > 400 ? 'space-between' : 'center',
   },
   userCard: {
-    width: '48%',
-    backgroundColor: '#121212',
-    borderRadius: 15,
-    padding: 15,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-    shadowColor: '#9B61E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    width: CARD_WIDTH,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  cardBlur: {
+    flex: 1,
+  },
+  cardGradient: {
+    padding: 20,
+    minHeight: 240,
+  },
+  imageContainer: {
+    alignItems: 'center',
+    position: 'relative',
+    marginBottom: 16,
   },
   profileImage: {
-    width: '100%',
-    height: 120,
-    borderRadius: 10,
-    marginBottom: 10,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: '#8A2BE2',
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#00D46A',
+    borderWidth: 2,
+    borderColor: '#2A2A2A',
   },
   userInfo: {
-    flex: 1,
-  },
-  nameRatingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 5,
+    flex: 1,
   },
   userName: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    flex: 1,
+    fontSize: 18,
+    color: '#F2F2F2',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  locationText: {
+    fontSize: 14,
+    color: '#999999',
+    marginLeft: 4,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  tag: {
+    backgroundColor: 'rgba(166, 109, 211, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(166, 109, 211, 0.4)',
+  },
+  tagText: {
+    fontSize: 12,
+    color: '#A66DD3',
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 12,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: 2,
+    marginRight: 8,
   },
   ratingText: {
-    color: '#A0A0A0',
-    fontSize: 12,
-    marginLeft: 4,
-  },
-  hourlyRate: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  location: {
-    color: '#A0A0A0',
     fontSize: 14,
-    marginBottom: 5,
+    color: '#CCCCCC',
   },
-  tags: {
-    color: '#9B61E5',
-    fontSize: 12,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#121212',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(155, 97, 229, 0.3)',
-  },
-  modalTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  locationOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(155, 97, 229, 0.2)',
-  },
-  locationOptionText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginLeft: 10,
-  },
-  searchLocationContainer: {
-    marginVertical: 15,
-  },
-  searchLocationInput: {
-    backgroundColor: '#121212',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    color: '#FFFFFF',
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-  },
-  popularTitle: {
-    color: '#FFFFFF',
+  priceText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  popularLocations: {
-    maxHeight: 200,
-  },
-  filterLabel: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  ageRangeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  ageInput: {
-    backgroundColor: '#121212',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    color: '#FFFFFF',
-    fontSize: 16,
-    width: '40%',
+    color: '#E0B0FF',
     textAlign: 'center',
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-  },
-  ageRangeText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-  },
-  roleContainer: {
-    marginBottom: 10,
-  },
-  roleChip: {
-    backgroundColor: '#121212',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-  },
-  selectedRoleChip: {
-    backgroundColor: '#9B61E5',
-  },
-  roleText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-  },
-  selectedRoleText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  genderContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  genderButton: {
-    backgroundColor: '#121212',
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    flex: 1,
-    marginHorizontal: 5,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-  },
-  selectedGenderButton: {
-    backgroundColor: '#9B61E5',
-  },
-  genderText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-  },
-  selectedGenderText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  ratingFilterContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  ratingButton: {
-    backgroundColor: '#121212',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    marginRight: 10,
-    marginBottom: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#9B61E5',
-  },
-  selectedRatingButton: {
-    backgroundColor: '#9B61E5',
-  },
-  ratingButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-  },
-  selectedRatingButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
   },
 });
