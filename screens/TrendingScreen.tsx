@@ -222,7 +222,7 @@ export default function TrendingScreen() {
           {/* Video indicator */}
           {post.isVideo && (
             <View style={styles.videoIndicator}>
-              <Play size={12} color="#FFFFFF" fill="#FFFFFF" />
+              <Play size={12} color="#F5F5F5" fill="#F5F5F5" />
               <Text style={styles.videoDuration}>{post.duration}</Text>
             </View>
           )}
@@ -230,7 +230,7 @@ export default function TrendingScreen() {
           {/* Trending badge */}
           {post.isTrending && (
             <Animated.View style={[styles.trendingBadge, fireAnimatedStyle]}>
-              <Flame size={10} color="#FFFFFF" fill="#FFFFFF" />
+              <Flame size={10} color="#F5F5F5" fill="#F5F5F5" />
             </Animated.View>
           )}
 
@@ -248,11 +248,11 @@ export default function TrendingScreen() {
           </Text>
           <View style={styles.postStats}>
             <View style={styles.statItem}>
-              <Eye size={10} color="#999999" />
+              <Eye size={10} color="#B0B0B0" />
               <Text style={styles.statText}>{formatNumber(post.viewCount)}</Text>
             </View>
             <View style={styles.statItem}>
-              <Heart size={10} color="#999999" />
+              <Heart size={10} color="#B0B0B0" />
               <Text style={styles.statText}>{formatNumber(post.likes)}</Text>
             </View>
           </View>
@@ -316,7 +316,7 @@ export default function TrendingScreen() {
             onPress={() => setShowFilterModal(true)} 
             style={styles.filterButton}
           >
-            <Filter size={22} color="#CCCCCC" />
+            <Filter size={22} color="#B0B0B0" />
           </TouchableOpacity>
         </View>
 
@@ -324,7 +324,7 @@ export default function TrendingScreen() {
         <View style={styles.hotSection}>
           <View style={styles.hotHeader}>
             <Animated.View style={[styles.fireIconContainer, fireAnimatedStyle]}>
-              <Flame size={16} color="#8A2BE2" fill="#8A2BE2" />
+              <Flame size={16} color="#7A4FE2" fill="#7A4FE2" />
             </Animated.View>
             <Text style={[styles.hotTitle, { fontFamily: 'Inter_600SemiBold' }]}>
               Hot Right Now
@@ -360,7 +360,7 @@ export default function TrendingScreen() {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
-              tintColor="#8A2BE2"
+              tintColor="#7A4FE2"
               progressBackgroundColor="#2A2A2A"
             />
           }
@@ -380,7 +380,7 @@ export default function TrendingScreen() {
                   Filters
                 </Text>
                 <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                  <X size={24} color="#CCCCCC" />
+                  <X size={24} color="#B0B0B0" />
                 </TouchableOpacity>
               </View>
 
@@ -492,7 +492,7 @@ export default function TrendingScreen() {
 
               <TouchableOpacity style={styles.applyButton} onPress={handleFilterApply}>
                 <LinearGradient
-                  colors={['#8A2BE2', '#7A1FD1']}
+                  colors={['#7A4FE2', '#6B3FCF']}
                   style={styles.applyButtonGradient}
                 >
                   <Text style={[styles.applyButtonText, { fontFamily: 'Inter_600SemiBold' }]}>
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1E1E',
   },
   loadingText: {
-    color: '#EAEAEA',
+    color: '#F5F5F5',
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
   },
@@ -538,13 +538,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoText: {
-    color: '#EAEAEA',
+    color: '#F5F5F5',
     fontSize: 22,
     fontWeight: '700',
     marginLeft: 12,
   },
   filterButton: {
-    padding: 8,
+    padding: 12,
     backgroundColor: '#2A2A2A',
     borderRadius: 20,
     borderWidth: 1,
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   },
   fireIconContainer: {
     marginRight: 8,
-    shadowColor: '#8A2BE2',
+    shadowColor: '#7A4FE2',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
@@ -569,12 +569,12 @@ const styles = StyleSheet.create({
   },
   hotTitle: {
     fontSize: 18,
-    color: '#EAEAEA',
+    color: '#F5F5F5',
     fontWeight: '600',
   },
   hotSubtitle: {
     fontSize: 12,
-    color: '#999999',
+    color: '#B0B0B0',
     fontWeight: '400',
   },
   genreSection: {
@@ -587,23 +587,23 @@ const styles = StyleSheet.create({
   genreChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#2A2A2A',
+    backgroundColor: 'transparent',
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#3A3A3A',
     position: 'relative',
   },
   selectedGenreChip: {
-    backgroundColor: '#8A2BE2',
-    borderColor: '#8A2BE2',
+    backgroundColor: '#7A4FE2',
+    borderColor: '#7A4FE2',
   },
   genreText: {
-    color: '#CCCCCC',
+    color: '#B0B0B0',
     fontSize: 14,
     fontWeight: '500',
   },
   selectedGenreText: {
-    color: '#FFFFFF',
+    color: '#F5F5F5',
     fontWeight: '600',
   },
   genreGlow: {
@@ -612,7 +612,7 @@ const styles = StyleSheet.create({
     left: -2,
     right: -2,
     bottom: -2,
-    backgroundColor: '#8A2BE2',
+    backgroundColor: '#7A4FE2',
     borderRadius: 22,
     opacity: 0.3,
     zIndex: -1,
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
   postTile: {
     width: TILE_SIZE,
     backgroundColor: '#2A2A2A',
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   videoDuration: {
-    color: '#FFFFFF',
+    color: '#F5F5F5',
     fontSize: 10,
     fontWeight: '600',
     marginLeft: 4,
@@ -666,13 +666,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: '#8A2BE2',
+    backgroundColor: '#7A4FE2',
     borderRadius: 10,
     width: 20,
     height: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#8A2BE2',
+    shadowColor: '#7A4FE2',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 8,
@@ -690,10 +690,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   postInfo: {
-    padding: 8,
+    padding: 12,
   },
   creatorHandle: {
-    color: '#EAEAEA',
+    color: '#F5F5F5',
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 4,
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statText: {
-    color: '#999999',
+    color: '#B0B0B0',
     fontSize: 10,
     fontWeight: '500',
     marginLeft: 3,
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#3A3A3A',
   },
   modalTitle: {
-    color: '#EAEAEA',
+    color: '#F5F5F5',
     fontSize: 18,
     fontWeight: '600',
   },
@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   filterLabel: {
-    color: '#EAEAEA',
+    color: '#F5F5F5',
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 12,
@@ -757,29 +757,29 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterOption: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#1E1E1E',
-    borderRadius: 16,
+    backgroundColor: 'transparent',
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#3A3A3A',
   },
   selectedFilterOption: {
-    backgroundColor: '#8A2BE2',
-    borderColor: '#8A2BE2',
+    backgroundColor: '#7A4FE2',
+    borderColor: '#7A4FE2',
   },
   filterOptionText: {
-    color: '#CCCCCC',
+    color: '#B0B0B0',
     fontSize: 14,
     fontWeight: '500',
   },
   selectedFilterOptionText: {
-    color: '#FFFFFF',
+    color: '#F5F5F5',
     fontWeight: '600',
   },
   applyButton: {
     margin: 24,
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: 'hidden',
   },
   applyButtonGradient: {
@@ -787,7 +787,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   applyButtonText: {
-    color: '#FFFFFF',
+    color: '#F5F5F5',
     fontSize: 16,
     fontWeight: '600',
   },

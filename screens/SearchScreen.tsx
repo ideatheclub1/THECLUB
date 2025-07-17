@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
+  Image,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Image,
-  Switch,
-  Modal,
   SafeAreaView,
+  TextInput,
+  Switch,
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,7 +22,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Filter, MessageCircle, MapPin, Star, Heart, Search, X, ChevronDown, Bell } from 'lucide-react-native';
+import { Filter, MessageCircle, MapPin, Star, Heart, Search, X, Bell } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
@@ -123,7 +122,6 @@ export default function SearchScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [showLocalHosts, setShowLocalHosts] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
   
   // Load Inter fonts
   const [fontsLoaded] = useFonts({
@@ -214,7 +212,7 @@ export default function SearchScreen() {
               </Text>
               
               <View style={styles.locationRow}>
-                <MapPin size={14} color="#999999" />
+                <MapPin size={14} color="#B0B0B0" />
                 <Text style={[styles.locationText, { fontFamily: 'Inter_400Regular' }]} numberOfLines={1}>
                   {user.location}
                 </Text>
@@ -280,7 +278,7 @@ export default function SearchScreen() {
               onPress={handleNotificationPress} 
               style={styles.iconButton}
             >
-              <Bell size={22} color="#CCCCCC" />
+              <Bell size={22} color="#B0B0B0" />
               <View style={styles.notificationBadge}>
                 <Text style={styles.badgeText}>2</Text>
               </View>
@@ -290,7 +288,7 @@ export default function SearchScreen() {
               onPress={handleMessagesPress} 
               style={styles.iconButton}
             >
-              <MessageCircle size={22} color="#CCCCCC" />
+              <MessageCircle size={22} color="#B0B0B0" />
             </TouchableOpacity>
           </View>
         </View>
@@ -299,28 +297,25 @@ export default function SearchScreen() {
           {/* Search Section */}
           <View style={styles.searchSection}>
             <View style={styles.searchContainer}>
-              <Search size={20} color="#999999" style={styles.searchIcon} />
+              <Search size={20} color="#B0B0B0" style={styles.searchIcon} />
               <TextInput
                 style={[styles.searchInput, { fontFamily: 'Inter_400Regular' }]}
                 placeholder="Search by name, skills, or interests..."
-                placeholderTextColor="#999999"
+                placeholderTextColor="#B0B0B0"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity onPress={() => setSearchQuery('')}>
-                  <X size={20} color="#999999" />
+                  <X size={20} color="#B0B0B0" />
                 </TouchableOpacity>
               )}
             </View>
 
             {/* Filter Row */}
             <View style={styles.filterRow}>
-              <TouchableOpacity 
-                style={styles.filterButton} 
-                onPress={() => setShowFilterModal(true)}
-              >
-                <Filter size={18} color="#A66DD3" />
+              <TouchableOpacity style={styles.filterButton}>
+                <Filter size={18} color="#7A4FE2" />
                 <Text style={[styles.filterText, { fontFamily: 'Inter_500Medium' }]}>
                   Filters
                 </Text>
@@ -333,8 +328,8 @@ export default function SearchScreen() {
                 <Switch
                   value={showLocalHosts}
                   onValueChange={setShowLocalHosts}
-                  trackColor={{ false: '#3A3A3A', true: '#A66DD3' }}
-                  thumbColor={showLocalHosts ? '#FFFFFF' : '#CCCCCC'}
+                  trackColor={{ false: '#3A3A3A', true: '#7A4FE2' }}
+                  thumbColor={showLocalHosts ? '#F5F5F5' : '#B0B0B0'}
                   ios_backgroundColor="#3A3A3A"
                 />
               </View>
@@ -373,7 +368,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1E1E',
   },
   loadingText: {
-    color: '#F2F2F2',
+    color: '#F5F5F5',
     fontSize: 16,
   },
   header: {
@@ -390,7 +385,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoText: {
-    color: '#F2F2F2',
+    color: '#F5F5F5',
     fontSize: 22,
     fontWeight: '700',
     marginLeft: 12,
@@ -408,7 +403,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: '#8A2BE2',
+    backgroundColor: '#7A4FE2',
     borderRadius: 8,
     minWidth: 16,
     height: 16,
@@ -417,7 +412,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: '#F5F5F5',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -445,7 +440,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: '#F2F2F2',
+    color: '#F5F5F5',
     fontSize: 16,
   },
   filterRow: {
@@ -464,7 +459,7 @@ const styles = StyleSheet.create({
     borderColor: '#3A3A3A',
   },
   filterText: {
-    color: '#A66DD3',
+    color: '#7A4FE2',
     fontSize: 14,
     marginLeft: 8,
   },
@@ -474,7 +469,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   toggleText: {
-    color: '#CCCCCC',
+    color: '#B0B0B0',
     fontSize: 14,
   },
   usersSection: {
@@ -483,7 +478,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    color: '#F2F2F2',
+    color: '#F5F5F5',
     marginBottom: 20,
   },
   usersGrid: {
@@ -519,7 +514,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     borderWidth: 2,
-    borderColor: '#8A2BE2',
+    borderColor: '#7A4FE2',
   },
   onlineIndicator: {
     position: 'absolute',
@@ -538,7 +533,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 18,
-    color: '#F2F2F2',
+    color: '#F5F5F5',
     marginBottom: 8,
     textAlign: 'center',
   },
@@ -549,7 +544,7 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 14,
-    color: '#999999',
+    color: '#B0B0B0',
     marginLeft: 4,
   },
   tagsContainer: {
@@ -560,16 +555,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   tag: {
-    backgroundColor: 'rgba(166, 109, 211, 0.2)',
+    backgroundColor: 'rgba(122, 79, 226, 0.2)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(166, 109, 211, 0.4)',
+    borderColor: 'rgba(122, 79, 226, 0.4)',
   },
   tagText: {
     fontSize: 12,
-    color: '#A66DD3',
+    color: '#7A4FE2',
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -583,11 +578,11 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 14,
-    color: '#CCCCCC',
+    color: '#B0B0B0',
   },
   priceText: {
     fontSize: 18,
-    color: '#E0B0FF',
+    color: '#F5F5F5',
     textAlign: 'center',
   },
 });
