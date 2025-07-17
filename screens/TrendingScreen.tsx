@@ -172,6 +172,12 @@ export default function TrendingScreen() {
     // Apply filters
   }, []);
 
+  // Masonry-style layout calculation
+  const getItemHeight = (index: number) => {
+    const heights = [TILE_SIZE * 1.3, TILE_SIZE, TILE_SIZE * 1.5];
+    return heights[index % heights.length];
+  };
+
   const PostTile = React.memo(({ post, index }: { post: TrendingPost; index: number }) => {
     const scale = useSharedValue(1);
     const glow = useSharedValue(0);
@@ -200,9 +206,11 @@ export default function TrendingScreen() {
       shadowRadius: interpolate(glow.value, [0, 1], [4, 12]),
     }));
 
+    const tileHeight = getItemHeight(index);
+
     return (
       <AnimatedTouchableOpacity
-        style={[styles.postTile, animatedStyle]}
+        style={[styles.postTile, { height: tileHeight }, animatedStyle]}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={handlePress}
@@ -630,10 +638,11 @@ const styles = StyleSheet.create({
   },
   postImageContainer: {
     position: 'relative',
+    flex: 1,
   },
   postImage: {
     width: '100%',
-    height: TILE_SIZE,
+    height: '100%',
     resizeMode: 'cover',
   },
   videoIndicator: {
