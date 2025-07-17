@@ -8,8 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFonts, PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
-import { Caveat_400Regular } from '@expo-google-fonts/caveat';
+import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Plus, FileText, DollarSign } from 'lucide-react-native';
 import StickyNoteCard from './StickyNoteCard';
@@ -64,8 +63,9 @@ const mockNotes: Note[] = [
 
 export default function BulletinBoardSection({ isCurrentUser }: BulletinBoardSectionProps) {
   const [fontsLoaded] = useFonts({
-    PatrickHand_400Regular,
-    Caveat_400Regular,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
   });
 
   const [notes, setNotes] = useState<Note[]>([]);
@@ -161,11 +161,11 @@ export default function BulletinBoardSection({ isCurrentUser }: BulletinBoardSec
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <FileText size={48} color="#6B7280" />
-      <Text style={[styles.emptyTitle, { fontFamily: 'Inter-Regular' }]}>
+      <FileText size={48} color="#666666" />
+      <Text style={[styles.emptyTitle, { fontFamily: 'Inter_400Regular' }]}>
         No notes yet
       </Text>
-      <Text style={[styles.emptySubtitle, { fontFamily: 'Inter-Regular' }]}>
+      <Text style={[styles.emptySubtitle, { fontFamily: 'Inter_400Regular' }]}>
         {isCurrentUser ? 'Pin your first achievement or milestone' : 'This bulletin board is empty'}
       </Text>
     </View>
@@ -181,15 +181,15 @@ export default function BulletinBoardSection({ isCurrentUser }: BulletinBoardSec
 
   return (
     <View style={styles.container}>
-      {/* Sophisticated Header */}
+      {/* Professional Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <FileText size={24} color="#8B5CF6" />
-          <Text style={[styles.sectionTitle, { fontFamily: 'Inter-SemiBold' }]}>
+          <FileText size={24} color="#6C5CE7" />
+          <Text style={[styles.sectionTitle, { fontFamily: 'Inter_600SemiBold' }]}>
             Bulletin Board
           </Text>
         </View>
-        <Text style={[styles.noteCount, { fontFamily: 'Inter-Regular' }]}>
+        <Text style={[styles.noteCount, { fontFamily: 'Inter_400Regular' }]}>
           {notes.length} note{notes.length !== 1 ? 's' : ''}
         </Text>
       </View>
@@ -216,11 +216,11 @@ export default function BulletinBoardSection({ isCurrentUser }: BulletinBoardSec
           onPress={() => setShowAddModal(true)}
         >
           <LinearGradient
-            colors={['#6366F1', '#8B5CF6', '#A855F7']}
+            colors={['#6C5CE7', '#5A4FCF']}
             style={styles.addButtonGradient}
           >
             <Plus size={20} color="#FFFFFF" />
-            <Text style={[styles.addButtonText, { fontFamily: 'Inter-SemiBold' }]}>
+            <Text style={[styles.addButtonText, { fontFamily: 'Inter_600SemiBold' }]}>
               Add Note
             </Text>
           </LinearGradient>
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   },
   noteCount: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: '#B0B0B0',
     fontWeight: '400',
   },
   listContainer: {
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#9CA3AF',
+    color: '#B0B0B0',
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderRadius: 24,
     overflow: 'hidden',
-    shadowColor: '#8B5CF6',
+    shadowColor: '#6C5CE7',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -324,7 +324,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#9CA3AF',
-    fontFamily: 'Inter-Regular',
+    color: '#B0B0B0',
   },
 });

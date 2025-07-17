@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFonts, PatrickHand_400Regular } from '@expo-google-fonts/patrick-hand';
+import { useFonts, Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -42,7 +42,8 @@ const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpaci
 
 export default function CurrencyNoteCard({ note, onImagePress, index }: CurrencyNoteCardProps) {
   const [fontsLoaded] = useFonts({
-    PatrickHand_400Regular,
+    Inter_400Regular,
+    Inter_600SemiBold,
   });
 
   const scale = useSharedValue(1);
@@ -103,7 +104,7 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
       activeOpacity={0.9}
     >
       <LinearGradient
-        colors={['#2F5233', '#1E3A20', '#4A6B3A', '#2F5233']}
+        colors={['#1B5E20', '#2E7D32', '#388E3C', '#4CAF50']}
         style={styles.dollarBill}
       >
         {/* Aged paper texture overlay */}
@@ -131,14 +132,20 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
         
         {/* Dollar bill serial number */}
         <View style={styles.serialSection}>
-          <Text style={styles.serialText}>A{note.id}4567890B</Text>
+          <Text style={[styles.serialText, { fontFamily: 'Inter_400Regular' }]}>
+            A{note.id}4567890B
+          </Text>
         </View>
         
         {/* Federal reserve seal area */}
         <View style={styles.sealArea}>
           <View style={styles.federalSeal}>
-            <Text style={styles.sealText}>FEDERAL</Text>
-            <Text style={styles.sealText}>RESERVE</Text>
+            <Text style={[styles.sealText, { fontFamily: 'Inter_600SemiBold' }]}>
+              FEDERAL
+            </Text>
+            <Text style={[styles.sealText, { fontFamily: 'Inter_600SemiBold' }]}>
+              RESERVE
+            </Text>
           </View>
         </View>
         
@@ -153,7 +160,7 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
                   resizeMode="cover"
                 />
                 <View style={styles.portraitOverlay}>
-                  <Eye size={12} color="#1E3A20" />
+                  <Eye size={12} color="#1B5E20" />
                 </View>
               </TouchableOpacity>
             </View>
@@ -161,15 +168,19 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
           
           <View style={styles.rightSection}>
             <View style={styles.denominationArea}>
-              <Text style={styles.dollarSymbol}>$</Text>
-              <Text style={styles.denomination}>{note.amount || 1}</Text>
+              <Text style={[styles.dollarSymbol, { fontFamily: 'Inter_600SemiBold' }]}>
+                $
+              </Text>
+              <Text style={[styles.denomination, { fontFamily: 'Inter_600SemiBold' }]}>
+                {note.amount || 1}
+              </Text>
             </View>
             
             <View style={styles.achievementInfo}>
-              <Text style={[styles.achievementTitle, { fontFamily: 'PatrickHand_400Regular' }]}>
+              <Text style={[styles.achievementTitle, { fontFamily: 'Inter_600SemiBold' }]}>
                 ACHIEVEMENT
               </Text>
-              <Text style={[styles.achievementDesc, { fontFamily: 'PatrickHand_400Regular' }]} numberOfLines={2}>
+              <Text style={[styles.achievementDesc, { fontFamily: 'Inter_400Regular' }]} numberOfLines={2}>
                 {note.title}
               </Text>
             </View>
@@ -178,7 +189,7 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
         
         {/* Bottom section */}
         <View style={styles.bottomSection}>
-          <Text style={styles.treasuryText}>
+          <Text style={[styles.treasuryText, { fontFamily: 'Inter_600SemiBold' }]}>
             TREASURY ACHIEVEMENT • {note.createdAt}
           </Text>
         </View>
@@ -193,7 +204,9 @@ export default function CurrencyNoteCard({ note, onImagePress, index }: Currency
         
         {/* Watermark effect */}
         <View style={styles.watermark}>
-          <Text style={styles.watermarkText}>VERIFIED</Text>
+          <Text style={[styles.watermarkText, { fontFamily: 'Inter_600SemiBold' }]}>
+            VERIFIED
+          </Text>
         </View>
       </LinearGradient>
     </AnimatedTouchableOpacity>
@@ -204,7 +217,7 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: cardWidth,
     marginHorizontal: 8,
-    shadowColor: '#1E3A20',
+    shadowColor: '#1B5E20',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
@@ -215,7 +228,7 @@ const styles = StyleSheet.create({
     minHeight: 160,
     position: 'relative',
     borderWidth: 2,
-    borderColor: '#4A6B3A',
+    borderColor: '#2E7D32',
   },
   paperTexture: {
     position: 'absolute',
@@ -306,7 +319,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderWidth: 1,
-    borderColor: '#6B8E23',
+    borderColor: '#FFD700',
     borderStyle: 'solid',
   },
   innerBorder: {
@@ -316,7 +329,7 @@ const styles = StyleSheet.create({
     right: 4,
     bottom: 4,
     borderWidth: 1,
-    borderColor: '#9ACD32',
+    borderColor: '#FFF8DC',
     borderStyle: 'dashed',
     opacity: 0.6,
   },
@@ -327,7 +340,7 @@ const styles = StyleSheet.create({
     right: 8,
     bottom: 8,
     borderWidth: 1,
-    borderColor: '#8FBC8F',
+    borderColor: '#F0E68C',
     opacity: 0.4,
   },
   serialSection: {
@@ -337,8 +350,7 @@ const styles = StyleSheet.create({
   },
   serialText: {
     fontSize: 8,
-    color: '#2F4F2F',
-    fontFamily: 'monospace',
+    color: '#0D4F12',
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },
@@ -352,15 +364,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(47, 79, 47, 0.3)',
+    backgroundColor: 'rgba(255, 215, 0, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2F4F2F',
+    borderColor: '#FFD700',
   },
   sealText: {
     fontSize: 6,
-    color: '#2F4F2F',
+    color: '#0D4F12',
     fontWeight: 'bold',
     textAlign: 'center',
     lineHeight: 8,
@@ -379,10 +391,10 @@ const styles = StyleSheet.create({
     width: 60,
     height: 75,
     borderWidth: 2,
-    borderColor: '#2F4F2F',
+    borderColor: '#FFD700',
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: 'rgba(47, 79, 47, 0.1)',
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
   },
   portraitImage: {
     width: '100%',
@@ -408,28 +420,27 @@ const styles = StyleSheet.create({
   dollarSymbol: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2F4F2F',
+    color: '#0D4F12',
     marginRight: 4,
   },
   denomination: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#2F4F2F',
-    fontFamily: 'serif',
+    color: '#0D4F12',
   },
   achievementInfo: {
     alignItems: 'center',
   },
   achievementTitle: {
     fontSize: 10,
-    color: '#2F4F2F',
+    color: '#0D4F12',
     fontWeight: 'bold',
     marginBottom: 4,
     letterSpacing: 1,
   },
   achievementDesc: {
     fontSize: 9,
-    color: '#2F4F2F',
+    color: '#0D4F12',
     textAlign: 'center',
     lineHeight: 12,
     opacity: 0.8,
@@ -443,7 +454,7 @@ const styles = StyleSheet.create({
   },
   treasuryText: {
     fontSize: 7,
-    color: '#2F4F2F',
+    color: '#0D4F12',
     fontWeight: 'bold',
     letterSpacing: 1,
     textAlign: 'center',
@@ -462,7 +473,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     borderWidth: 1,
-    borderColor: '#6B8E23',
+    borderColor: '#FFD700',
     borderRadius: 2,
     opacity: 0.3,
   },
@@ -473,7 +484,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     borderWidth: 1,
-    borderColor: '#6B8E23',
+    borderColor: '#FFD700',
     borderRadius: 2,
     opacity: 0.3,
   },
@@ -484,7 +495,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     borderWidth: 1,
-    borderColor: '#6B8E23',
+    borderColor: '#FFD700',
     borderRadius: 2,
     opacity: 0.3,
   },
@@ -495,7 +506,7 @@ const styles = StyleSheet.create({
     width: 15,
     height: 15,
     borderWidth: 1,
-    borderColor: '#6B8E23',
+    borderColor: '#FFD700',
     borderRadius: 2,
     opacity: 0.3,
   },
@@ -509,7 +520,7 @@ const styles = StyleSheet.create({
   watermarkText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2F4F2F',
+    color: '#0D4F12',
     transform: [{ rotate: '-15deg' }],
   },
 });
