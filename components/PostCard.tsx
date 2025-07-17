@@ -13,11 +13,11 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withRepeat,
+  withSequence,
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { Heart, MessageCircle, Share2, MoveHorizontal as MoreHorizontal, TrendingUp } from 'lucide-react-native';
+import { Heart, MessageCircle, Share2, Bookmark, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import { Post } from '../types';
 import { useComments } from '../contexts/CommentContext';
 import CommentSystem from './CommentSystem';
@@ -35,29 +35,37 @@ export default function PostCard({ post, onLike, onComment }: PostCardProps) {
   const [isLiked, setIsLiked] = useState(post.isLiked);
   const [likes, setLikes] = useState(post.likes);
   const [showComments, setShowComments] = useState(false);
+  const [showFullCaption, setShowFullCaption] = useState(false);
   const { getCommentCount } = useComments();
   
   const likeScale = useSharedValue(1);
-  const trendingGlow = useSharedValue(0);
-
-  React.useEffect(() => {
-    if (post.isTrending) {
-      trendingGlow.value = withRepeat(
-        withTiming(1, { duration: 2000 }),
-        -1,
-        true
-      );
-    }
-  }, [post.isTrending]);
+  const likeGlow = useSharedValue(0);
+  const shareScale = useSharedValue(1);
 
   const handleLike = () => {
-    likeScale.value = withSpring(1.2, {}, () => {
-      likeScale.value = withSpring(1);
-    });
+    // Heart bounce + glow animation
+    likeScale.value = withSequence(
+      withSpring(1.3, { damping: 8, stiffness: 200 }),
+      withSpring(1, { damping: 8, stiffness: 200 })
+    );
+    
+    likeGlow.value = withSequence(
+      withTiming(1, { duration: 200 }),
+      withTiming(0, { duration: 800 })
+    );
     
     setIsLiked(!isLiked);
     setLikes(isLiked ? likes - 1 : likes + 1);
     onLike(post.id);
+  };
+
+  const handleShare = () => {
+    // Ripple/expand animation
+    shareScale.value = withSequence(
+      withSpring(1.2, { damping: 6, stiffness: 200 }),
+      withSpring(1, { damping: 6, stiffness: 200 })
+    );
+    Alert.alert('Share', 'Share functionality would be implemented here');
   };
 
   const handleCommentPress = () => {
@@ -92,17 +100,51 @@ export default function PostCard({ post, onLike, onComment }: PostCardProps) {
   const likeAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ scale: likeScale.value }],
+      shadowOpacity: interpolate(likeGlow.value, [0, 1], [0, 0.8]),
+      shadowRadius: interpolate(likeGlow.value, [0, 1], [0, 15]),
     };
   });
 
-  const trendingAnimatedStyle = useAnimatedStyle(() => {
+  const shareAnimatedStyle = useAnimatedStyle(() => {
     return {
-      shadowOpacity: interpolate(trendingGlow.value, [0, 1], [0.3, 0.7]),
-      shadowRadius: interpolate(trendingGlow.value, [0, 1], [6, 15]),
+      transform: [{ scale: shareScale.value }],
     };
   });
 
   const commentCount = getCommentCount(post.id);
+
+  // Extract hashtags and create pill badges
+  const renderCaption = () => {
+    const maxLines = 3;
+    const words = post.content.split(' ');
+    const shouldTruncate = words.length > 20 && !showFullCaption;
+    const displayText = shouldTruncate ? words.slice(0, 20).join(' ') + '...' : post.content;
+    
+    const parts = displayText.split(/(\#\w+)/g);
+    
+    return (
+      <View style={styles.captionContainer}>
+        <Text style={styles.caption}>
+          <Text style={styles.captionUsername}>{post.user.username}</Text>{' '}
+          {parts.map((part, index) => {
+            if (part.startsWith('#')) {
+              return (
+                <View key={index} style={styles.hashtagPill}>
+                  <Text style={styles.hashtagText}>{part}</Text>
+                </View>
+              );
+            }
+            return <Text key={index} style={styles.captionText}>{part}</Text>;
+          })}
+        </Text>
+        {shouldTruncate && (
+          <TouchableOpacity onPress={() => setShowFullCaption(true)}>
+            <Text style={styles.readMore}>Read more</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   return (
     <>
@@ -119,63 +161,59 @@ export default function PostCard({ post, onLike, onComment }: PostCardProps) {
           
           <View style={styles.headerRight}>
             {post.isTrending && (
-              <Animated.View style={[styles.trendingBadge, trendingAnimatedStyle]}>
-                <TrendingUp size={12} color="#ff6b9d" />
+              <View style={styles.trendingPill}>
                 <Text style={styles.trendingText}>Trending</Text>
-              </Animated.View>
+              </View>
             )}
             <TouchableOpacity style={styles.moreButton}>
-              <MoreHorizontal size={18} color="#ffffff" />
+              <MoreHorizontal size={18} color="#F5F5F5" strokeWidth={2} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Image */}
-        {post.image && (
-          <Image source={{ uri: post.image }} style={styles.postImage} />
-        )}
+        {/* Image with padding */}
+        <View style={styles.imageContainer}>
+          {post.image && (
+            <Image source={{ uri: post.image }} style={styles.postImage} />
+          )}
+        </View>
 
         {/* Actions */}
         <View style={styles.actions}>
           <View style={styles.leftActions}>
-            <TouchableOpacity style={styles.actionButton} onPress={handleLike}>
-              <Animated.View style={likeAnimatedStyle}>
+            <Animated.View style={[styles.actionButton, likeAnimatedStyle]}>
+              <TouchableOpacity onPress={handleLike}>
                 <Heart
-                  size={22}
-                  color={isLiked ? '#ff6b9d' : '#ffffff'}
-                  fill={isLiked ? '#ff6b9d' : 'transparent'}
+                  size={26}
+                  color={isLiked ? '#E74C3C' : '#F5F5F5'}
+                  fill={isLiked ? '#E74C3C' : 'transparent'}
+                  strokeWidth={2}
                 />
-              </Animated.View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </Animated.View>
 
             <TouchableOpacity
               style={styles.actionButton}
               onPress={handleCommentPress}
             >
-              <MessageCircle size={22} color="#ffffff" />
+              <MessageCircle size={26} color="#F5F5F5" strokeWidth={2} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton}>
-              <Share2 size={22} color="#ffffff" />
-            </TouchableOpacity>
+            <Animated.View style={[styles.actionButton, shareAnimatedStyle]}>
+              <TouchableOpacity onPress={handleShare}>
+                <Share2 size={26} color="#F5F5F5" strokeWidth={2} />
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+          
+          <View style={styles.rightActions}>
+            <Text style={styles.engagementText}>{likes} likes</Text>
+            <Text style={styles.engagementText}>{commentCount} comments</Text>
           </View>
         </View>
 
-        {/* Likes */}
-        <View style={styles.likesContainer}>
-          <Text style={[styles.likesText, isLiked && styles.likedText]}>
-            {likes} likes
-          </Text>
-        </View>
-
-        {/* Content */}
-        <View style={styles.contentContainer}>
-          <Text style={styles.content}>
-            <Text style={styles.contentUsername}>{post.user.username}</Text>
-            {' '}
-            <Text style={styles.contentText}>{post.content}</Text>
-          </Text>
-        </View>
+        {/* Caption with hashtag pills */}
+        {renderCaption()}
 
         {/* Comments */}
         <TouchableOpacity onPress={handleCommentPress}>
@@ -198,15 +236,15 @@ export default function PostCard({ post, onLike, onComment }: PostCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#000000',
-    marginBottom: 16,
+    backgroundColor: '#1E1E1E',
+    marginBottom: 24,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   userInfo: {
     flexDirection: 'row',
@@ -214,65 +252,60 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 12,
     borderWidth: 1,
-    borderColor: '#9B61E5',
+    borderColor: '#6C5CE7',
   },
   userDetails: {
     flex: 1,
   },
   username: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#F5F5F5',
   },
   timestamp: {
-    fontSize: 11,
-    color: '#A0A0A0',
-    marginTop: 1,
+    fontSize: 12,
+    color: '#B0B0B0',
+    marginTop: 2,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
-  trendingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(18, 18, 18, 0.8)',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 10,
-    marginRight: 6,
-    shadowColor: '#9B61E5',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(155, 97, 229, 0.3)',
+  trendingPill: {
+    backgroundColor: '#6C5CE7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   trendingText: {
-    fontSize: 9,
-    color: '#9B61E5',
+    fontSize: 12,
+    color: '#FFFFFF',
     fontWeight: '600',
-    marginLeft: 3,
   },
   moreButton: {
     padding: 4,
   },
+  imageContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
   postImage: {
-    width: width,
-    height: width,
+    width: '100%',
+    height: width - 32,
     resizeMode: 'cover',
+    borderRadius: 12,
   },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 8,
   },
   leftActions: {
@@ -280,40 +313,60 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   actionButton: {
-    marginRight: 14,
-    padding: 2,
+    marginRight: 20,
+    padding: 4,
+    shadowColor: '#E74C3C',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 15,
+    elevation: 0,
   },
-  likesContainer: {
-    paddingHorizontal: 12,
-    marginBottom: 4,
+  rightActions: {
+    alignItems: 'flex-end',
   },
-  likesText: {
+  engagementText: {
     fontSize: 13,
-    color: '#FFFFFF',
+    color: '#B0B0B0',
+    fontWeight: '500',
+  },
+  captionContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  caption: {
+    fontSize: 14,
+    lineHeight: 20,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  captionUsername: {
+    fontWeight: '600',
+    color: '#F5F5F5',
+  },
+  captionText: {
+    color: '#F5F5F5',
+  },
+  hashtagPill: {
+    backgroundColor: 'rgba(108, 92, 231, 0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginHorizontal: 2,
+  },
+  hashtagText: {
+    color: '#6C5CE7',
+    fontSize: 14,
     fontWeight: '600',
   },
-  likedText: {
-    color: '#9B61E5',
-  },
-  contentContainer: {
-    paddingHorizontal: 12,
-    marginBottom: 4,
-  },
-  content: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  contentUsername: {
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  contentText: {
-    color: '#FFFFFF',
+  readMore: {
+    color: '#B0B0B0',
+    fontSize: 14,
+    marginTop: 4,
   },
   viewComments: {
     fontSize: 13,
-    color: '#A0A0A0',
-    paddingHorizontal: 12,
-    marginBottom: 8,
+    color: '#B0B0B0',
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
 });

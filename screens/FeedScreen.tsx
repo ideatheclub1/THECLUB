@@ -81,7 +81,7 @@ export default function FeedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#1E1E1E',
   },
   flatList: {
     flex: 1,

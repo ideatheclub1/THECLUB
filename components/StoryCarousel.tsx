@@ -10,6 +10,13 @@ import {
 } from 'react-native';
 import { Plus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  interpolate,
+} from 'react-native-reanimated';
 import { Story, User } from '../types';
 
 interface StoryCarouselProps {
@@ -45,41 +52,69 @@ export default function StoryCarousel({
     });
   };
 
+  const StoryItem = ({ story, isCurrentUser = false }: { story?: Story; isCurrentUser?: boolean }) => {
+    const glowAnimation = useSharedValue(0);
+
+    React.useEffect(() => {
+      if (!isCurrentUser) {
+        glowAnimation.value = withRepeat(
+          withTiming(1, { duration: 2500 }),
+          -1,
+          true
+        );
+      }
+    }, []);
+
+    const animatedStyle = useAnimatedStyle(() => {
+      if (isCurrentUser) return {};
+      
+      return {
+        shadowOpacity: interpolate(glowAnimation.value, [0, 1], [0.3, 0.7]),
+        shadowRadius: interpolate(glowAnimation.value, [0, 1], [8, 16]),
+      };
+    });
+
+    return (
+      <TouchableOpacity
+        style={styles.storyContainer}
+        onPress={isCurrentUser ? onAddStory : () => story && onStoryPress(story)}
+      >
+        <Animated.View style={[
+          styles.storyImageContainer,
+          !isCurrentUser && styles.activeStoryBorder,
+          !isCurrentUser && animatedStyle
+        ]}>
+          <Image 
+            source={{ uri: isCurrentUser ? currentUser.avatar : story?.user.avatar }} 
+            style={styles.storyImage} 
+          />
+          {isCurrentUser && (
+            <View style={styles.addButton}>
+              <Plus size={12} color="#FFFFFF" strokeWidth={3} />
+            </View>
+          )}
+        </Animated.View>
+        <Text style={styles.storyUsername} numberOfLines={1}>
+          {isCurrentUser ? 'My Club' : story?.user.username}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        style={styles.scrollView}
       >
-        {/* Add Story Button */}
-        <TouchableOpacity style={styles.addStoryContainer} onPress={onAddStory}>
-          <View style={styles.addStoryImageContainer}>
-            <Image source={{ uri: currentUser.avatar }} style={styles.addStoryImage} />
-            <View style={styles.addButton}>
-              <Plus size={14} color="#fff" strokeWidth={3} />
-            </View>
-          </View>
-          <Text style={styles.storyUsername}>Your Story</Text>
-        </TouchableOpacity>
+        {/* Current User Story */}
+        <StoryItem isCurrentUser={true} />
 
-        {/* Stories */}
+        {/* Other Stories */}
         {stories.map((story) => (
-          <TouchableOpacity
-            key={story.id}
-            style={styles.storyContainer}
-            onPress={() => onStoryPress(story)}
-          >
-            <View style={styles.storyImageContainer}>
-              <Image source={{ uri: story.user.avatar }} style={styles.storyImage} />
-              {!story.viewed && <View style={styles.unviewedIndicator} />}
-            </View>
-            <TouchableOpacity onPress={() => handleUserPress(story.user.id)}>
-              <Text style={styles.storyUsername} numberOfLines={1}>
-                {story.user.username}
-              </Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
+          <StoryItem key={story.id} story={story} />
         ))}
       </ScrollView>
       
@@ -91,28 +126,40 @@ export default function StoryCarousel({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#000000',
-    paddingTop: 12,
+    backgroundColor: '#1E1E1E',
+    paddingTop: 16,
+  },
+  scrollView: {
+    paddingBottom: 16,
   },
   scrollContent: {
-    paddingHorizontal: 12,
-    gap: 12,
-    paddingBottom: 12,
+    paddingHorizontal: 16,
+    gap: 16,
   },
-  addStoryContainer: {
+  storyContainer: {
     alignItems: 'center',
-    width: 64,
+    width: 70,
   },
-  addStoryImageContainer: {
+  storyImageContainer: {
     position: 'relative',
-    marginBottom: 4,
+    marginBottom: 8,
+    padding: 2,
+    borderRadius: 26,
   },
-  addStoryImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  activeStoryBorder: {
+    backgroundColor: 'rgba(108, 92, 231, 0.3)',
+    shadowColor: '#6C5CE7',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  storyImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 2,
-    borderColor: '#333',
+    borderColor: '#1E1E1E',
   },
   addButton: {
     position: 'absolute',
@@ -121,48 +168,22 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#6C5CE7',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#000000',
-  },
-  storyContainer: {
-    alignItems: 'center',
-    width: 64,
-  },
-  storyImageContainer: {
-    position: 'relative',
-    marginBottom: 4,
-  },
-  storyImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    borderColor: '#8B5CF6',
-  },
-  unviewedIndicator: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#10B981',
-    borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: '#1E1E1E',
   },
   storyUsername: {
-    color: '#fff',
-    fontSize: 11,
+    color: '#F5F5F5',
+    fontSize: 12,
     textAlign: 'center',
-    maxWidth: 64,
-    fontWeight: '400',
+    fontWeight: '500',
+    maxWidth: 70,
   },
   bottomDivider: {
     height: 0.5,
-    backgroundColor: 'rgba(155, 97, 229, 0.2)',
+    backgroundColor: 'rgba(108, 92, 231, 0.15)',
     marginHorizontal: 0,
   },
 });

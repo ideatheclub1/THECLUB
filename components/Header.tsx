@@ -27,7 +27,7 @@ export default function Header({ onMessagesPress }: HeaderProps) {
 
   React.useEffect(() => {
     logoGlow.value = withRepeat(
-      withTiming(1, { duration: 2500 }),
+      withTiming(1, { duration: 3000 }),
       -1,
       true
     );
@@ -35,15 +35,8 @@ export default function Header({ onMessagesPress }: HeaderProps) {
 
   const logoAnimatedStyle = useAnimatedStyle(() => {
     return {
-      shadowOpacity: interpolate(logoGlow.value, [0, 1], [0.3, 0.6]),
-      shadowRadius: interpolate(logoGlow.value, [0, 1], [8, 15]),
-    };
-  });
-
-  const heartAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      shadowOpacity: interpolate(logoGlow.value, [0, 1], [0.2, 0.5]),
-      shadowRadius: interpolate(logoGlow.value, [0, 1], [6, 12]),
+      shadowOpacity: interpolate(logoGlow.value, [0, 1], [0.4, 0.8]),
+      shadowRadius: interpolate(logoGlow.value, [0, 1], [8, 20]),
     };
   });
 
@@ -57,9 +50,7 @@ export default function Header({ onMessagesPress }: HeaderProps) {
         <View style={styles.header}>
           <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
             <View style={styles.logoContent}>
-              <Animated.View style={[styles.heartContainer, heartAnimatedStyle]}>
-                <Heart size={20} color="#ff6b9d" fill="#ff6b9d" />
-              </Animated.View>
+              <Heart size={24} color="#E74C3C" fill="#E74C3C" />
               <Text style={styles.logo}>The Club</Text>
             </View>
           </Animated.View>
@@ -68,7 +59,7 @@ export default function Header({ onMessagesPress }: HeaderProps) {
             onPress={handleMessagesPress} 
             style={styles.messagesButton}
           >
-            <MessageCircle size={20} color="#e0aaff" />
+            <MessageCircle size={22} color="#F5F5F5" strokeWidth={2} />
             {unreadCount > 0 && (
               <View style={styles.notificationBadge}>
                 <Text style={styles.notificationText}>{unreadCount}</Text>
@@ -86,73 +77,69 @@ export default function Header({ onMessagesPress }: HeaderProps) {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: '#000000',
+    backgroundColor: '#1E1E1E',
   },
   container: {
-    backgroundColor: '#000000',
+    backgroundColor: '#1E1E1E',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
   logoContainer: {
-    shadowColor: '#9B61E5',
+    shadowColor: '#6C5CE7',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
+    shadowOpacity: 0.6,
+    shadowRadius: 15,
     elevation: 8,
   },
   logoContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  heartContainer: {
-    marginRight: 6,
-    shadowColor: '#9B61E5',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
   logo: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#9B61E5',
+    fontSize: 26,
+    fontWeight: '300',
+    color: '#F5F5F5',
     letterSpacing: 0.5,
+    marginLeft: 8,
+    textShadowColor: '#6C5CE7',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   messagesButton: {
     position: 'relative',
-    padding: 6,
-    backgroundColor: 'rgba(18, 18, 18, 0.8)',
-    borderRadius: 16,
+    padding: 8,
+    backgroundColor: 'rgba(108, 92, 231, 0.1)',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(155, 97, 229, 0.3)',
+    borderColor: 'rgba(108, 92, 231, 0.3)',
   },
   notificationBadge: {
     position: 'absolute',
     top: -2,
     right: -2,
-    backgroundColor: '#9B61E5',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+    backgroundColor: '#6C5CE7',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
     borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: '#1E1E1E',
   },
   notificationText: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#FFFFFF',
     fontWeight: '600',
   },
   divider: {
     height: 0.5,
-    backgroundColor: 'rgba(155, 97, 229, 0.2)',
-    marginHorizontal: 16,
+    backgroundColor: 'rgba(108, 92, 231, 0.2)',
+    marginHorizontal: 20,
   },
 });
